@@ -13,7 +13,7 @@
   <a href="#-installation">Installation</a> ·
   <a href="#-configurer-votre-clé-api">Clé API</a> ·
   <a href="#-gratuit-ou-premium">Tarifs</a> ·
-  <a href="marketing/PRIVACY_POLICY.md">Confidentialité</a> ·
+  <a href="https://baastos-bfit.github.io/anti-bait-zero-clic/marketing/PRIVACY_POLICY.html">Confidentialité</a> ·
   <a href="#-questions-fréquentes">FAQ</a>
 </p>
 
@@ -142,12 +142,13 @@ Anti-Bait utilise un service d'intelligence artificielle pour lire les articles.
 
 | | Gratuit | Premium |
 |---|:---:|:---:|
+| Prix | 0 € | **3,99 €**, paiement unique, à vie |
 | Analyses par jour | 10 | **Illimitées** |
 | Réponses déjà analysées | ✅ illimitées | ✅ illimitées |
 | X, LinkedIn, sites d'actualité | ✅ | ✅ |
 | Choix du fournisseur et du modèle d'IA | ✅ | ✅ |
 
-L'abonnement Premium se souscrit depuis les réglages (bouton **Passer Premium**). Le paiement est sécurisé par **ExtensionPay** et **Stripe** : aucune donnée bancaire ne transite par l'extension.
+La version Premium s'achète en **un seul paiement de 3,99 €**, valable à vie, sans abonnement, depuis les réglages (bouton **Passer Premium**). Le paiement est sécurisé par **ExtensionPay** et **Stripe** : aucune donnée bancaire ne transite par l'extension.
 
 ---
 

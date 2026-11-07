@@ -49,7 +49,7 @@ Anti-Bait utilise le service d'IA de votre choix, Anthropic (Claude) ou OpenAI, 
 
 ★ GRATUIT OU PREMIUM
 • Gratuit : 10 analyses par jour (les réponses déjà obtenues ne comptent pas)
-• Premium : analyses illimitées
+• Premium : analyses illimitées, 3,99 € en paiement unique (pas d'abonnement)
 
 Pour commencer : installez l'extension, collez votre clé API dans la page de réglages qui s'ouvre automatiquement, autorisez la lecture des articles… et survolez !
 
@@ -104,7 +104,7 @@ Envoyer le texte de l'article survolé au fournisseur d'IA choisi par l'utilisat
 
 **Autorisation d'hôte : extensionpay.com**
 ```
-Vérifier le statut de l'abonnement Premium et afficher la page de paiement via ExtensionPay (paiement traité par Stripe ; aucune donnée bancaire ne transite par l'extension).
+Vérifier si l'utilisateur a acheté la version Premium et afficher la page de paiement via ExtensionPay (paiement traité par Stripe ; aucune donnée bancaire ne transite par l'extension).
 ```
 
 **Autorisation d'hôte facultative : https://*/***

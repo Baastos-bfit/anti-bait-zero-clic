@@ -56,9 +56,9 @@ Ces données sont traitées selon la politique de confidentialité du fournisseu
 
 Aucune donnée personnelle vous concernant n'est ajoutée à ces requêtes par l'extension.
 
-### c) ExtensionPay (abonnement Premium)
+### c) ExtensionPay (version Premium)
 
-L'abonnement Premium est géré par **ExtensionPay** (extensionpay.com), et le paiement par **Stripe**. À l'installation, la date d'installation est enregistrée dans le stockage synchronisé de Chrome. Quand vous ouvrez la page Premium pour la première fois, un identifiant aléatoire est créé auprès d'ExtensionPay et enregistré au même endroit. À partir de là, l'extension interroge ExtensionPay (au plus toutes les 10 minutes) pour savoir si vous êtes abonné. Si vous souscrivez, ExtensionPay et Stripe reçoivent les informations que vous saisissez sur leur page de paiement (adresse e-mail, moyen de paiement). **Ces informations ne transitent jamais par l'extension** et nous ne les voyons pas.
+La version Premium (paiement unique) est gérée par **ExtensionPay** (extensionpay.com), et le paiement par **Stripe**. À l'installation, la date d'installation est enregistrée dans le stockage synchronisé de Chrome. Quand vous ouvrez la page Premium pour la première fois, un identifiant aléatoire est créé auprès d'ExtensionPay et enregistré au même endroit. À partir de là, l'extension interroge ExtensionPay (au plus toutes les 10 minutes) pour savoir si vous avez acheté la version Premium. Si vous l'achetez, ExtensionPay et Stripe reçoivent les informations que vous saisissez sur leur page de paiement (adresse e-mail, moyen de paiement). **Ces informations ne transitent jamais par l'extension** et nous ne les voyons pas.
 
 - ExtensionPay : https://extensionpay.com/privacy
 - Stripe : https://stripe.com/privacy
@@ -79,7 +79,7 @@ L'abonnement Premium est géré par **ExtensionPay** (extensionpay.com), et le p
 | Scripts sur les sites d'actualité ajoutés               | Détecter le survol des liens sur les sites que **vous** avez choisis  |
 | Accès à X/Twitter et LinkedIn                           | Détecter le survol des liens sur ces plateformes                      |
 | Accès aux sites HTTPS (facultatif, demandé par un clic) | Télécharger l'article derrière le lien survolé                        |
-| Accès aux API d'Anthropic, d'OpenAI et d'ExtensionPay   | Obtenir la réponse de l'IA et vérifier l'abonnement                   |
+| Accès aux API d'Anthropic, d'OpenAI et d'ExtensionPay   | Obtenir la réponse de l'IA et vérifier l'achat Premium                  |
 
 Vous pouvez retirer l'accès aux sites à tout moment, depuis les réglages de l'extension ou depuis `chrome://extensions`.
 
@@ -110,4 +110,4 @@ Toute modification de cette politique sera publiée sur cette page, avec une nou
 
 ## 11. Contact
 
-**Bluon Bastien** : [jetmonster@hotmail.fr]
+**Bluon Bastien** : [jetmonster@hotmail.fr](mailto:jetmonster@hotmail.fr)
