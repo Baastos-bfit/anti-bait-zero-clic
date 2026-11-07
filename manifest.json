@@ -1,0 +1,75 @@
+{
+  "manifest_version": 3,
+  "name": "Anti-Bait Zéro Clic",
+  "short_name": "Anti-Bait",
+  "version": "1.0.0",
+  "description": "Survolez un lien putaclic : l'IA vous révèle la réponse sans que vous ayez à cliquer.",
+  "minimum_chrome_version": "120",
+
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+
+  "action": {
+    "default_title": "Anti-Bait Zéro Clic — Réglages",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    }
+  },
+
+  "options_ui": {
+    "page": "src/options/options.html",
+    "open_in_tab": true
+  },
+
+  "background": {
+    "service_worker": "src/background/service-worker.js"
+  },
+
+  "content_scripts": [
+    {
+      "matches": [
+        "https://x.com/*",
+        "https://twitter.com/*",
+        "https://mobile.twitter.com/*",
+        "https://*.linkedin.com/*"
+      ],
+      "js": [
+        "src/shared/domain-utils.js",
+        "src/content/hover-intent.js",
+        "src/content/tooltip-ui.js",
+        "src/content/content-script.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    },
+    {
+      "matches": ["https://extensionpay.com/*"],
+      "js": ["vendor/ExtPay.js"],
+      "run_at": "document_start"
+    }
+  ],
+
+  "permissions": [
+    "storage",
+    "scripting"
+  ],
+
+  "host_permissions": [
+    "https://api.anthropic.com/*",
+    "https://api.openai.com/*",
+    "https://extensionpay.com/*"
+  ],
+
+  "optional_host_permissions": [
+    "https://*/*"
+  ],
+
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'; base-uri 'none'"
+  }
+}

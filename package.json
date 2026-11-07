@@ -1,0 +1,16 @@
+{
+  "name": "anti-bait-zero-clic",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Extension Chrome MV3 : survolez un lien putaclic, l'IA révèle la réponse sans clic.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "icons": "node tools/generate-icons.mjs",
+    "pack": "node tools/pack.mjs"
+  }
+}

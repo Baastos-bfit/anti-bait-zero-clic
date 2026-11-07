@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Anti-Bait Zéro Clic — Réglages</title>
+  <link rel="icon" href="../../icons/icon-32.png">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <header class="top">
+    <img src="../../icons/icon-48.png" alt="" width="40" height="40">
+    <div>
+      <h1>Anti-Bait Zéro Clic</h1>
+      <p class="tagline">Survolez un titre putaclic : la réponse s’affiche, sans cliquer.</p>
+    </div>
+  </header>
+
+  <main>
+    <!-- 1. Clé API -->
+    <section id="api" class="panel" aria-labelledby="api-title">
+      <h2 id="api-title"><span class="step">1</span> Fournisseur IA et clé API</h2>
+      <p class="hint">
+        Votre clé est chiffrée (AES-GCM 256) dans votre navigateur et n’est envoyée qu’au fournisseur choisi.
+        Elle n’est jamais réaffichée : seuls ses 4 derniers caractères le sont.
+      </p>
+
+      <div class="grid">
+        <label for="provider">Fournisseur</label>
+        <select id="provider"></select>
+
+        <label for="model">Modèle</label>
+        <div>
+          <input id="model" list="model-list" autocomplete="off" spellcheck="false">
+          <datalist id="model-list"></datalist>
+          <p class="hint small" id="model-hint"></p>
+        </div>
+
+        <label for="api-key">Clé API</label>
+        <div>
+          <div class="row">
+            <input id="api-key" type="password" autocomplete="off" spellcheck="false" placeholder="sk-…">
+            <button id="save-key" type="button" class="primary">Enregistrer</button>
+          </div>
+          <p class="key-state" id="key-state"></p>
+          <div class="row">
+            <button id="test-key" type="button">Tester la clé</button>
+            <button id="delete-key" type="button" class="danger">Supprimer la clé</button>
+          </div>
+        </div>
+      </div>
+      <p class="feedback" id="api-feedback" role="status" aria-live="polite"></p>
+    </section>
+
+    <!-- 2. Accès aux articles -->
+    <section id="access" class="panel" aria-labelledby="access-title">
+      <h2 id="access-title"><span class="step">2</span> Lecture des articles</h2>
+      <p class="hint">
+        Pour lire l’article derrière un lien, Anti-Bait doit pouvoir le télécharger.
+        Chrome vous demandera l’autorisation d’accéder aux sites HTTPS. La lecture se fait
+        <strong>sans vos cookies</strong> : les sites ne savent pas qui vous êtes.
+      </p>
+      <p class="status-line"><span id="access-badge" class="badge"></span></p>
+      <div class="row">
+        <button id="grant-access" type="button" class="primary">Autoriser la lecture des articles</button>
+        <button id="revoke-access" type="button" class="danger">Retirer l’autorisation</button>
+      </div>
+      <p class="feedback" id="access-feedback" role="status" aria-live="polite"></p>
+    </section>
+
+    <!-- 3. Sites de médias -->
+    <section id="media" class="panel" aria-labelledby="media-title">
+      <h2 id="media-title"><span class="step">3</span> Sites de médias <span class="optional">(optionnel)</span></h2>
+      <p class="hint">
+        Anti-Bait fonctionne déjà sur X/Twitter et LinkedIn. Ajoutez ici les sites d’actualité
+        sur lesquels vous voulez aussi désamorcer les titres (ex. <code>lemonde.fr</code>).
+      </p>
+      <form id="media-form" class="row" novalidate>
+        <input id="media-input" placeholder="exemple.fr" autocomplete="off" spellcheck="false" aria-label="Domaine à ajouter">
+        <button type="submit" class="primary">Ajouter</button>
+      </form>
+      <ul id="media-list" class="media-list"></ul>
+      <p class="feedback" id="media-feedback" role="status" aria-live="polite"></p>
+    </section>
+
+    <!-- 4. Comportement -->
+    <section id="behavior" class="panel" aria-labelledby="behavior-title">
+      <h2 id="behavior-title"><span class="step">4</span> Comportement</h2>
+      <label class="switch">
+        <input id="enabled" type="checkbox">
+        <span>Activer Anti-Bait</span>
+      </label>
+      <div class="slider">
+        <label for="delay">Délai de survol avant analyse : <output id="delay-value"></output></label>
+        <input id="delay" type="range" min="200" max="2000" step="100">
+        <p class="hint small">Plus le délai est long, moins vous consommez de requêtes en faisant défiler un fil.</p>
+      </div>
+      <p class="feedback" id="behavior-feedback" role="status" aria-live="polite"></p>
+    </section>
+
+    <!-- 5. Premium -->
+    <section id="premium" class="panel" aria-labelledby="premium-title">
+      <h2 id="premium-title"><span class="step">★</span> Premium</h2>
+      <p id="premium-status" class="status-line"></p>
+      <div class="meter" aria-hidden="true"><div id="quota-bar"></div></div>
+      <div class="row">
+        <button id="upgrade" type="button" class="primary">Passer Premium</button>
+        <button id="login" type="button">Déjà Premium ? Se reconnecter</button>
+        <button id="refresh-premium" type="button">Actualiser</button>
+      </div>
+      <p class="hint small">Paiement sécurisé par ExtensionPay (Stripe). Aucune donnée bancaire ne transite par l’extension.</p>
+      <p class="feedback" id="premium-feedback" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <!-- Utilitaires partagés (script classique), puis la logique de la page (module). -->
+  <script src="../shared/domain-utils.js"></script>
+  <script type="module" src="options.js"></script>
+</body>
+</html>

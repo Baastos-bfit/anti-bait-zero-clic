@@ -1,0 +1,13 @@
+# Configuration GitHub Pages : le README sert de page d'accueil du site.
+title: Anti-Bait Zéro Clic
+description: Survolez un titre putaclic, obtenez la réponse, sans cliquer.
+lang: fr
+theme: jekyll-theme-cayman
+
+# Fichiers techniques non publiés comme pages du site.
+exclude:
+  - tests/
+  - tools/
+  - package.json
+  - TODO.md
+  - ORGANIZATION.md

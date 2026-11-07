@@ -1,0 +1,14 @@
+Anti-Bait Zéro Clic
+Copyright (c) 2026 [NOM DE L'ÉDITEUR]. Tous droits réservés.
+
+Ce logiciel est propriétaire. Aucune licence n'est accordée pour copier,
+modifier, redistribuer ou revendre tout ou partie de son code source, sauf
+autorisation écrite préalable du titulaire des droits.
+
+L'utilisation de l'extension par l'utilisateur final est régie par les
+conditions du Chrome Web Store et par la politique de confidentialité de
+l'extension.
+
+Composants tiers : ce paquet inclut la bibliothèque ExtPay (ExtensionPay),
+distribuée sous sa propre licence et NON couverte par le présent avis.
+Voir vendor/THIRD_PARTY_NOTICES.md.
