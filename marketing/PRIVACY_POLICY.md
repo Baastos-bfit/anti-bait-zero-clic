@@ -2,7 +2,7 @@
 
 **Dernière mise à jour : 7 novembre 2026**
 
-Anti-Bait Zéro Clic (« l'extension ») est une extension pour Google Chrome éditée par **[NOM DE L'ÉDITEUR]** (« nous »). Cette politique explique quelles données l'extension traite, où elles vont et comment vous gardez le contrôle.
+Anti-Bait Zéro Clic (« l'extension ») est une extension pour Google Chrome éditée par **Bluon Bastien** (« nous »). Cette politique explique quelles données l'extension traite, où elles vont et comment vous gardez le contrôle.
 
 **En résumé :** nous n'avons aucun serveur et nous ne recevons aucune de vos données. L'extension fonctionne dans votre navigateur. Elle envoie le texte d'un article au fournisseur d'intelligence artificielle que **vous** avez choisi, avec **votre** clé API, et seulement quand vous survolez un lien. Nous ne faisons ni publicité, ni pistage, ni revente de données.
 
@@ -23,13 +23,13 @@ L'extension n'agit **que** sur les liens que vous survolez, et uniquement sur le
 
 Ces données restent dans votre navigateur. Nous n'y avons pas accès.
 
-| Donnée | Pourquoi | Protection | Durée |
-|---|---|---|---|
-| Clé API de votre fournisseur d'IA | Appeler le service d'IA en votre nom | Chiffrée (AES-GCM 256 bits) ; jamais réaffichée en entier | Jusqu'à sa suppression ou la désinstallation |
-| Réglages (fournisseur, modèle, délai de survol, activation) | Fonctionnement de l'extension | - | Jusqu'à la désinstallation |
-| Liste des sites d'actualité que vous avez ajoutés | Activer l'extension sur ces sites | - | Jusqu'à leur retrait ou la désinstallation |
-| Compteur d'analyses du jour et statut Premium | Appliquer la limite de la version gratuite | Chiffrés | Renouvelé chaque jour |
-| Réponses déjà obtenues (réponse, titre et adresse de l'article) | Réafficher instantanément une réponse sans nouvel appel | Gardées en mémoire, jamais écrites sur le disque, inaccessibles aux sites web | **Effacées à la fermeture du navigateur** |
+| Donnée                                                          | Pourquoi                                                | Protection                                                                    | Durée                                        |
+| --------------------------------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------- | -------------------------------------------- |
+| Clé API de votre fournisseur d'IA                               | Appeler le service d'IA en votre nom                    | Chiffrée (AES-GCM 256 bits) ; jamais réaffichée en entier                     | Jusqu'à sa suppression ou la désinstallation |
+| Réglages (fournisseur, modèle, délai de survol, activation)     | Fonctionnement de l'extension                           | -                                                                             | Jusqu'à la désinstallation                   |
+| Liste des sites d'actualité que vous avez ajoutés               | Activer l'extension sur ces sites                       | -                                                                             | Jusqu'à leur retrait ou la désinstallation   |
+| Compteur d'analyses du jour et statut Premium                   | Appliquer la limite de la version gratuite              | Chiffrés                                                                      | Renouvelé chaque jour                        |
+| Réponses déjà obtenues (réponse, titre et adresse de l'article) | Réafficher instantanément une réponse sans nouvel appel | Gardées en mémoire, jamais écrites sur le disque, inaccessibles aux sites web | **Effacées à la fermeture du navigateur**    |
 
 L'extension ne conserve **aucun historique de navigation**.
 
@@ -38,22 +38,28 @@ L'extension ne conserve **aucun historique de navigation**.
 L'extension communique directement avec les services ci-dessous, sans passer par nous.
 
 ### a) Le site de l'article
+
 Pour lire un article, l'extension télécharge sa page. Comme pour toute visite, le site reçoit votre adresse IP et des informations techniques de connexion. L'extension n'envoie **ni vos cookies, ni la page d'où vient le lien** : le site ne sait pas qui vous êtes, même si vous y avez un compte.
 
 ### b) Votre fournisseur d'intelligence artificielle
+
 Selon votre choix dans les réglages, il s'agit d'**Anthropic** (Claude) ou d'**OpenAI**. À chaque analyse, l'extension lui envoie :
+
 - le texte de l'article (12 000 caractères au maximum), son titre, sa description et son adresse ;
 - le texte du lien survolé ;
 - votre clé API, qui sert à vous authentifier auprès de ce fournisseur.
 
 Ces données sont traitées selon la politique de confidentialité du fournisseur que vous avez choisi, avec lequel vous avez un compte :
+
 - Anthropic : https://www.anthropic.com/legal/privacy
 - OpenAI : https://openai.com/policies/privacy-policy
 
 Aucune donnée personnelle vous concernant n'est ajoutée à ces requêtes par l'extension.
 
 ### c) ExtensionPay (abonnement Premium)
+
 L'abonnement Premium est géré par **ExtensionPay** (extensionpay.com), et le paiement par **Stripe**. À l'installation, la date d'installation est enregistrée dans le stockage synchronisé de Chrome. Quand vous ouvrez la page Premium pour la première fois, un identifiant aléatoire est créé auprès d'ExtensionPay et enregistré au même endroit. À partir de là, l'extension interroge ExtensionPay (au plus toutes les 10 minutes) pour savoir si vous êtes abonné. Si vous souscrivez, ExtensionPay et Stripe reçoivent les informations que vous saisissez sur leur page de paiement (adresse e-mail, moyen de paiement). **Ces informations ne transitent jamais par l'extension** et nous ne les voyons pas.
+
 - ExtensionPay : https://extensionpay.com/privacy
 - Stripe : https://stripe.com/privacy
 
@@ -67,13 +73,13 @@ L'abonnement Premium est géré par **ExtensionPay** (extensionpay.com), et le p
 
 ## 5. Autorisations demandées par l'extension
 
-| Autorisation | Usage |
-|---|---|
-| Stockage | Enregistrer vos réglages, votre clé chiffrée et le cache des réponses |
-| Scripts sur les sites d'actualité ajoutés | Détecter le survol des liens sur les sites que **vous** avez choisis |
-| Accès à X/Twitter et LinkedIn | Détecter le survol des liens sur ces plateformes |
-| Accès aux sites HTTPS (facultatif, demandé par un clic) | Télécharger l'article derrière le lien survolé |
-| Accès aux API d'Anthropic, d'OpenAI et d'ExtensionPay | Obtenir la réponse de l'IA et vérifier l'abonnement |
+| Autorisation                                            | Usage                                                                 |
+| ------------------------------------------------------- | --------------------------------------------------------------------- |
+| Stockage                                                | Enregistrer vos réglages, votre clé chiffrée et le cache des réponses |
+| Scripts sur les sites d'actualité ajoutés               | Détecter le survol des liens sur les sites que **vous** avez choisis  |
+| Accès à X/Twitter et LinkedIn                           | Détecter le survol des liens sur ces plateformes                      |
+| Accès aux sites HTTPS (facultatif, demandé par un clic) | Télécharger l'article derrière le lien survolé                        |
+| Accès aux API d'Anthropic, d'OpenAI et d'ExtensionPay   | Obtenir la réponse de l'IA et vérifier l'abonnement                   |
 
 Vous pouvez retirer l'accès aux sites à tout moment, depuis les réglages de l'extension ou depuis `chrome://extensions`.
 
@@ -104,4 +110,4 @@ Toute modification de cette politique sera publiée sur cette page, avec une nou
 
 ## 11. Contact
 
-**[NOM DE L'ÉDITEUR]** : [ADRESSE E-MAIL DE CONTACT]
+**Bluon Bastien** : [jetmonster@hotmail.fr]
