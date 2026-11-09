@@ -34,6 +34,7 @@ importScripts(
   'settings.js',
   'cache.js',
   'premium.js',
+  'stats.js',
   'media-sites.js',
   'html-extractor.js',
   'sse.js',
@@ -113,6 +114,9 @@ async function runSummary(port, request, signal) {
     const cached = await AB.cache.get(url, variant);
     if (cached) {
       safePost(port, { type: 'done', cached: true, text: cached.text, title: cached.title, format, premium });
+      // Réponse affichée = clic évité (une fois par article et par jour). Un
+      // simple changement de format n'est pas un nouveau clic évité.
+      if (!explicitFormat) await AB.stats.recordAvoidedClick(cached.finalUrl || url).catch(() => {});
       return;
     }
 
@@ -183,6 +187,7 @@ async function runSummary(port, request, signal) {
       premium,
       quota: { premium: quota.premium, remaining: quota.remaining },
     });
+    if (!explicitFormat) await AB.stats.recordAvoidedClick(article.finalUrl || url).catch(() => {});
   } catch (err) {
     const error = AB.errors.toAppError(err);
     if (!committed && reservation) await AB.premium.refund(reservation).catch(() => {});
@@ -264,11 +269,12 @@ async function getState() {
     AB.mediaSites.list(),
     AB.premium.getStatus(),
   ]);
+  const stats = await AB.stats.getForDisplay(premium.premium);
   const providers = {};
   for (const [id, p] of Object.entries(CONFIG.PROVIDERS)) {
     providers[id] = { label: p.label, models: [...p.models], defaultModel: p.defaultModel, keyPrefix: p.keyPrefix };
   }
-  return { settings, keys, access: { broad }, mediaDomains, premium, providers };
+  return { settings, keys, access: { broad }, mediaDomains, premium, providers, stats };
 }
 
 /** Actions réservées aux pages de l'extension. */
@@ -295,6 +301,13 @@ const PAGE_HANDLERS = {
   removeMediaDomain: (msg) => AB.mediaSites.removeDomain(msg.domain),
   syncMediaDomains: () => AB.mediaSites.sync(),
   refreshPremium: () => AB.premium.getStatus({ force: true }),
+  // v2 : statistiques. Chiffres réservés au Premium (vérifié ici, pas par la page).
+  getStats: async () => AB.stats.getForDisplay(await AB.premium.isPremium()),
+  // Remise à zéro ouverte à tous : chacun peut effacer ses données locales.
+  resetStats: async () => {
+    await AB.stats.reset();
+    return AB.stats.getForDisplay(await AB.premium.isPremium());
+  },
   openPayment: () => AB.premium.openPaymentPage(),
   openLogin: () => AB.premium.openLoginPage(),
 };

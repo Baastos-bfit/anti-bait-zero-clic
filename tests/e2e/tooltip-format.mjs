@@ -144,6 +144,7 @@ try {
     return language;
   })()`);
   check('cache du worker pré-rempli (phrase + puces)', true);
+  await evaluate(swSession, 'AntiBait.stats.reset()');
 
   // 2. Onglet x.com simulé (interception réseau).
   const { targetId } = await send('Target.createTarget', { url: 'about:blank' });
@@ -319,7 +320,30 @@ try {
   check('premium : retour « Une phrase » instantané (cache de l’onglet)', t.answer.text === SENTENCE && !t.card.hidden);
   check('aucun clic propagé à la page sur l’ensemble du scénario', (await evaluate(tab, 'window.__pageClicks')) === 0);
 
-  // 6. Captures « premium » (clair et sombre).
+  // 6. Statistiques (tâche 4.5) : le lien a été survolé une dizaine de fois,
+  //    sur plusieurs pages, avec des changements de format.
+  const raw = await evaluate(swSession, 'AntiBait.stats.read()');
+  check('stats : survols répétés du même lien → 1 seul clic évité', raw.clicksAvoided === 1, `clicksAvoided=${raw.clicksAvoided}`);
+  const freeView = await evaluate(swSession, 'AntiBait.stats.getForDisplay(false)');
+  check('stats : compte gratuit → aucun chiffre renvoyé', freeView.locked === true && freeView.clicksAvoided === undefined, JSON.stringify(freeView));
+  const extId = new URL(sw.url).host;
+  const { targetId: optId } = await send('Target.createTarget', { url: `chrome-extension://${extId}/src/options/options.html` });
+  const opt = await attach(optId);
+  await send('Runtime.enable', {}, opt);
+  await sleep(1200);
+  const viaPage = await evaluate(opt, `chrome.runtime.sendMessage({ type: 'getStats' })`);
+  check(
+    'stats : page d’options (Premium) → clics évités et temps gagné',
+    viaPage.ok && viaPage.data.clicksAvoided === 1 && viaPage.data.timeSavedLabel === '2 min',
+    JSON.stringify(viaPage.data)
+  );
+  const afterReset = await evaluate(opt, `chrome.runtime.sendMessage({ type: 'resetStats' })`);
+  check('stats : remise à zéro depuis la page d’options', afterReset.ok && afterReset.data.clicksAvoided === 0, JSON.stringify(afterReset.data));
+  await send('Target.closeTarget', { targetId: optId });
+  await send('Target.activateTarget', { targetId });
+  await sleep(300);
+
+  // 7. Captures « premium » (clair et sombre).
   await navigate('https://x.com/home');
   await hoverBait();
   t = await inspect();

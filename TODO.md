@@ -33,8 +33,8 @@
 - [x] 4.2 Connecteur IA : prompt conditionnel langue × format, mise en forme des puces (`ai-connector.js`)
 - [x] 4.3 Cache par variante (langue × format) et règle « changement de format sans quota » prouvée côté worker (`cache.js`, `service-worker.js`)
 - [x] 4.4 Infobulle : sélecteur de format (puces verrouillées 🔒 pour les comptes gratuits, avec incitation Premium) (`tooltip-ui.js`, `content-script.js`) — validé en E2E : `tests/e2e/tooltip-format.mjs` (17/17)
-- [ ] 4.5 Compteur de clics évités et de temps gagné (`stats.js`, `service-worker.js`)
+- [x] 4.5 Compteur de clics évités et de temps gagné (`stats.js`, `service-worker.js`) — 1 clic évité max par article et par jour, stockage `chrome.storage.local` sans URL en clair, API `getStats` / `resetStats` prête pour la page d'options ; validé en E2E (21/21)
 - [ ] 4.6 Page d'options : langue, format par défaut, carte « Vos statistiques » (Premium) (`options.*`)
-- [ ] 4.7 Documentation (README, fiche Store, politique de confidentialité), version 2.0.0, paquet
+- [ ] 4.7 Documentation (README, fiche Store, politique de confidentialité — **ajouter le compteur local et le registre d'empreintes du jour**), version 2.0.0, paquet
 
 > Détail des revues QA × SecOps par tâche : [docs/REVIEWS.md](docs/REVIEWS.md) · Audit final : [docs/SECURITY.md](docs/SECURITY.md)
