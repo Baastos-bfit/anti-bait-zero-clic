@@ -20,7 +20,7 @@
 - [x] Intégrer le SDK ExtensionPay (Logique de blocage Premium).
 - [x] Audit SecOps final avant déploiement.
 
-## [ ] Phase 4 : Version 2.0.0
+## [x] Phase 4 : Version 2.0.0
 
 - [x] Intégrer une option dans la page de configuration pour traduire automatiquement en français les résumés d'articles étrangers.
 - [x] Ajouter un sélecteur de format dans l'infobulle (Mode "Une phrase" vs Mode "Bullet Points").
@@ -35,6 +35,6 @@
 - [x] 4.4 Infobulle : sélecteur de format (puces verrouillées 🔒 pour les comptes gratuits, avec incitation Premium) (`tooltip-ui.js`, `content-script.js`) — validé en E2E : `tests/e2e/tooltip-format.mjs` (17/17)
 - [x] 4.5 Compteur de clics évités et de temps gagné (`stats.js`, `service-worker.js`) — 1 clic évité max par article et par jour, stockage `chrome.storage.local` sans URL en clair, API `getStats` / `resetStats` prête pour la page d'options ; validé en E2E (21/21)
 - [x] 4.6 Page d'options : langue (3 choix), format par défaut (🔒 Premium), carte « Vos statistiques » (verrouillée pour les gratuits, remise à zéro avec confirmation pour les Premium), thèmes clair/sombre (`options.*`) — validé en E2E : `tests/e2e/options-v2.mjs` (21/21)
-- [ ] 4.7 Documentation (README, fiche Store, politique de confidentialité — **ajouter le compteur local et le registre d'empreintes du jour**), version 2.0.0, paquet
+- [x] 4.7 Livraison : version 2.0.0, politique de confidentialité (compteur local et registre d'empreintes du jour, sans URL), fiche du Store (« Nouveautés de la V2.0.0 »), README, 3 captures Store 1280 × 800 (`marketing/screenshots/`), paquet `dist/anti-bait-2.0.0.zip`
 
 > Détail des revues QA × SecOps par tâche : [docs/REVIEWS.md](docs/REVIEWS.md) · Audit final : [docs/SECURITY.md](docs/SECURITY.md)
