@@ -39,7 +39,10 @@
 
   // ── Constantes ─────────────────────────────────────────────────────────
   const PORT_NAME = 'anti-bait-summary';
-  const DEFAULT_SETTINGS = { enabled: true, hoverDelayMs: 600 };
+  const DEFAULT_SETTINGS = { enabled: true, hoverDelayMs: 600, format: 'sentence' };
+  const FORMATS = ['sentence', 'bullets'];
+  const PREMIUM_NOTICE =
+    '🔒 Le format Puces est réservé à la version Premium (3,99 €, paiement unique). La page de paiement s’ouvre dans un nouvel onglet.';
   const GRACE_MS = 350; // temps laissé pour glisser du lien vers l'infobulle
   const CLIENT_CACHE_MAX = 40; // résumés gardés en mémoire dans l'onglet
   const MIN_HEADLINE_CHARS = 15; // texte minimal d'un lien « titre » (sites médias)
@@ -61,8 +64,18 @@
   // ── État ───────────────────────────────────────────────────────────────
   const lifecycle = new AbortController(); // retire TOUS les écouteurs DOM d'un coup
   let settings = { ...DEFAULT_SETTINGS };
-  /** @type {Map<string, {text: string}>} LRU des résumés déjà reçus. */
+  /**
+   * LRU des résumés déjà reçus, par lien puis par format (v2) : rebasculer vers
+   * un format déjà affiché est instantané, sans requête.
+   * @type {Map<string, {byFormat: Object<string, string>}>}
+   */
   const clientCache = new Map();
+  /**
+   * Dernier statut Premium communiqué par le service worker (v2). Sert
+   * uniquement à l'AFFICHAGE du cadenas : le verrou réel est dans le worker.
+   */
+  let lastPremium = false;
+  let paymentOpenedAt = 0; // anti double-clic sur le cadenas
   /** @type {WeakMap<HTMLAnchorElement, {href: string, target: object|null}>} */
   const linkAnalysis = new WeakMap();
   /** Requête en cours (une seule à la fois par onglet). */
@@ -131,6 +144,7 @@
       hoverDelayMs: Number.isFinite(s.hoverDelayMs)
         ? Math.min(2000, Math.max(200, s.hoverDelayMs))
         : DEFAULT_SETTINGS.hoverDelayMs,
+      format: FORMATS.includes(s.format) ? s.format : 'sentence',
     };
     hoverIntent.setDelay(settings.hoverDelayMs);
     if (!settings.enabled) hoverIntent.dismiss();
@@ -286,11 +300,14 @@
   window.addEventListener('scroll', () => tooltip.scheduleReposition(), passiveOpts);
   window.addEventListener('resize', () => tooltip.scheduleReposition(), passiveOpts);
 
-  // Onglet masqué : on annule tout (économie de quota et de CPU).
+  // Onglet masqué : on annule l'analyse EN COURS (économie de quota et de CPU).
+  // v2 : une infobulle terminée (statique, sans coût) reste affichée — le clic
+  // sur « 🔒 Puces » ouvre un onglet de paiement, et l'utilisateur doit retrouver
+  // sa réponse et le message d'incitation en revenant.
   document.addEventListener(
     'visibilitychange',
     () => {
-      if (document.visibilityState === 'hidden') hoverIntent.dismiss();
+      if (document.visibilityState === 'hidden' && job) hoverIntent.dismiss();
     },
     { signal: lifecycle.signal }
   );
@@ -304,15 +321,65 @@
 
     tooltip.show(link, { domain: D.bareHost(new URL(target.url).hostname) });
 
-    const cached = clientCache.get(target.url);
-    if (cached) {
+    const format = preferredFormat();
+    const entry = clientCache.get(target.url);
+    if (entry && entry.byFormat[format]) {
       // Rafraîchit la position LRU.
       clientCache.delete(target.url);
-      clientCache.set(target.url, cached);
-      tooltip.setFinal({ text: cached.text, cached: true });
+      clientCache.set(target.url, entry);
+      tooltip.setFinal({ text: entry.byFormat[format], cached: true, format });
+      showFormatSelector(link, target, format);
       return;
     }
     startJob(link, target);
+  }
+
+  /** Format attendu par défaut (le worker reste seul juge du format réel). */
+  function preferredFormat() {
+    return settings.format === 'bullets' && lastPremium ? 'bullets' : 'sentence';
+  }
+
+  // ── v2 : sélecteur de format ───────────────────────────────────────────
+
+  function showFormatSelector(link, target, current) {
+    tooltip.setFormatOptions({
+      current,
+      premium: lastPremium,
+      onSelect: (format) => selectFormat(link, target, current, format),
+    });
+  }
+
+  /**
+   * Clic sur un format dans l'infobulle. Ne ferme jamais l'infobulle : le clic
+   * a lieu dans la carte (Shadow DOM), qui n'est pas un lien.
+   */
+  function selectFormat(link, target, current, format) {
+    if (format === current || !FORMATS.includes(format)) return;
+    if (!tooltip.visible || tooltip.anchor !== link) return; // infobulle déjà passée à un autre lien
+    // La carte ne doit plus bouger sous la souris posée sur le sélecteur.
+    tooltip.lockPosition();
+
+    // Compte gratuit : incitation Premium, la réponse actuelle reste affichée.
+    if (format === 'bullets' && !lastPremium) {
+      tooltip.setNotice(PREMIUM_NOTICE);
+      if (Date.now() - paymentOpenedAt > 3000) {
+        paymentOpenedAt = Date.now();
+        sendToBackground({ type: 'openPayment' });
+      }
+      return;
+    }
+
+    // Format déjà reçu pour ce lien : affichage instantané.
+    const entry = clientCache.get(target.url);
+    if (entry && entry.byFormat[format]) {
+      tooltip.setFinal({ text: entry.byFormat[format], cached: true, format });
+      showFormatSelector(link, target, format);
+      return;
+    }
+
+    // Sinon : nouvelle demande au worker (sans quota, lien déjà analysé).
+    tooltip.showReformatting();
+    startJob(link, target, format);
   }
 
   function handleAbandon(link) {
@@ -320,7 +387,12 @@
     tooltip.hide();
   }
 
-  function startJob(link, target) {
+  /**
+   * @param {HTMLAnchorElement} link
+   * @param {{url: string, text: string}} target
+   * @param {string} [format] v2 : format explicite demandé depuis le sélecteur.
+   */
+  function startJob(link, target, format) {
     cancelJob();
     let port;
     try {
@@ -329,7 +401,7 @@
       teardown(); // contexte invalidé
       return;
     }
-    const current = { link, url: target.url, port, text: '', finished: false };
+    const current = { link, target, url: target.url, port, text: '', finished: false };
     job = current;
 
     port.onMessage.addListener((msg) => {
@@ -347,7 +419,9 @@
       }
     });
 
-    port.postMessage({ type: 'summarize', url: target.url, linkText: target.text });
+    const request = { type: 'summarize', url: target.url, linkText: target.text };
+    if (format) request.format = format;
+    port.postMessage(request);
   }
 
   function handlePortMessage(current, msg) {
@@ -368,9 +442,12 @@
       case 'done': {
         current.finished = true;
         const text = typeof msg.text === 'string' ? msg.text : current.text;
-        remember(current.url, text);
+        const format = FORMATS.includes(msg.format) ? msg.format : 'sentence';
+        lastPremium = msg.premium === true;
+        remember(current.url, format, text);
         // Le texte final (mis en forme par le worker) remplace le flux brut.
-        tooltip.setFinal({ text, cached: Boolean(msg.cached), quota: msg.quota });
+        tooltip.setFinal({ text, cached: Boolean(msg.cached), quota: msg.quota, format });
+        showFormatSelector(current.link, current.target, format);
         closeJob(current);
         break;
       }
@@ -390,9 +467,12 @@
     }
   }
 
-  function remember(url, text) {
+  function remember(url, format, text) {
     if (!text) return;
-    clientCache.set(url, { text });
+    const entry = clientCache.get(url) || { byFormat: {} };
+    entry.byFormat[format] = text;
+    clientCache.delete(url); // position LRU la plus récente
+    clientCache.set(url, entry);
     while (clientCache.size > CLIENT_CACHE_MAX) {
       clientCache.delete(clientCache.keys().next().value);
     }

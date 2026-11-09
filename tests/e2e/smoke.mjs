@@ -11,7 +11,7 @@
  * d'options, survol sur une page x.com simulée (interception réseau), Shadow
  * DOM fermé, monde isolé, fermeture de l'infobulle.
  */
-import { spawn } from 'node:child_process';
+import { spawn, execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -212,7 +212,18 @@ try {
   check('exécution du scénario', false, err.message);
 } finally {
   try { ws?.close(); } catch {}
-  proc.kill();
+  // Edge relance son processus principal sous un autre PID : on arrête tous les
+  // processus qui utilisent CE profil jetable (unique à ce run), et eux seuls.
+  try {
+    proc.kill();
+    if (process.platform === 'win32') {
+      const tag = path.basename(profile);
+      execFileSync('powershell', ['-NoProfile', '-Command',
+        `Get-CimInstance Win32_Process -Filter "Name='msedge.exe' OR Name='chrome.exe'" | ` +
+        `Where-Object { $_.CommandLine -like '*${tag}*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`,
+      ], { stdio: 'ignore' });
+    }
+  } catch {}
   await sleep(500);
   try { fs.rmSync(profile, { recursive: true, force: true }); } catch {}
   const failed = results.filter((r) => !r.ok).length;

@@ -112,7 +112,7 @@ async function runSummary(port, request, signal) {
     // 3. Cache : réponse instantanée, sans quota ni réseau.
     const cached = await AB.cache.get(url, variant);
     if (cached) {
-      safePost(port, { type: 'done', cached: true, text: cached.text, title: cached.title, format });
+      safePost(port, { type: 'done', cached: true, text: cached.text, title: cached.title, format, premium });
       return;
     }
 
@@ -180,6 +180,7 @@ async function runSummary(port, request, signal) {
       text: answer,
       title: article.title,
       format,
+      premium,
       quota: { premium: quota.premium, remaining: quota.remaining },
     });
   } catch (err) {
