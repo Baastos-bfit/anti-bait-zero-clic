@@ -60,7 +60,24 @@
       provider: 'anthropic',
       model: 'claude-opus-5-5',
       hoverDelayMs: 600,
+      language: 'browser',
+      format: 'sentence',
     }),
+
+    // ── v2 : langue et format des réponses ────────────────────────────────
+    /**
+     * Langue des réponses :
+     *   browser : langue de l'interface du navigateur (comportement v1) ;
+     *   fr      : toujours en français (traduction des articles étrangers) ;
+     *   article : langue d'origine de l'article.
+     */
+    LANGUAGES: Object.freeze(['browser', 'fr', 'article']),
+    /** Formats de réponse. « bullets » (3 puces max) est réservé au Premium. */
+    FORMATS: Object.freeze(['sentence', 'bullets']),
+    PREMIUM_FORMATS: Object.freeze(['bullets']),
+
+    /** Statistiques (Premium) : temps estimé gagné par clic évité. */
+    MINUTES_SAVED_PER_CLICK: 2,
 
     /** Fournisseurs IA pris en charge (BYOK : l'utilisateur fournit sa clé). */
     PROVIDERS: Object.freeze({

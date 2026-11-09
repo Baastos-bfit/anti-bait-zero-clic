@@ -80,7 +80,9 @@ function safePost(port, message) {
 /**
  * Traite une demande d'analyse.
  * @param {chrome.runtime.Port} port
- * @param {{url: string, linkText: string}} request
+ * @param {{url: string, linkText: string, format?: string}} request
+ *   format (v2, optionnel) : envoyé par le sélecteur de l'infobulle pour
+ *   réafficher un lien dans un autre format. Absent = réglage de l'utilisateur.
  * @param {AbortSignal} signal
  */
 async function runSummary(port, request, signal) {
@@ -90,35 +92,62 @@ async function runSummary(port, request, signal) {
     // 1. Validation (le content script n'est jamais cru sur parole).
     const url = AB.urlGuard.assertSafe(request.url).href;
     const linkText = typeof request.linkText === 'string' ? request.linkText.slice(0, 300) : '';
+    const explicitFormat = request.format !== undefined;
+    if (explicitFormat && !CONFIG.FORMATS.includes(request.format)) throw new AppError('BAD_REQUEST');
 
     const settings = await AB.settings.getSettings();
     if (!settings.enabled) throw new AppError('DISABLED');
 
-    // 2. Cache : réponse instantanée, sans quota ni réseau.
-    const cached = await AB.cache.get(url);
+    // 2. Langue et format effectifs. [SecOps] Décidés ici, avec le statut Premium
+    //    vérifié auprès d'ExtensionPay : les puces restent réservées au Premium,
+    //    même si un content script ou un réglage les demande.
+    const premium = await AB.premium.isPremium();
+    const requestedFormat = explicitFormat ? request.format : settings.format;
+    if (explicitFormat && AB.settings.isPremiumFormat(requestedFormat) && !premium) {
+      throw new AppError('PREMIUM_REQUIRED');
+    }
+    const format = AB.settings.effectiveFormat(requestedFormat, premium);
+    const variant = { language: AB.ai.resolveLanguage(settings.language).id, format };
+
+    // 3. Cache : réponse instantanée, sans quota ni réseau.
+    const cached = await AB.cache.get(url, variant);
     if (cached) {
-      safePost(port, { type: 'done', cached: true, text: cached.text, title: cached.title });
+      safePost(port, { type: 'done', cached: true, text: cached.text, title: cached.title, format });
       return;
     }
 
-    // 3. Clé API (déchiffrée maintenant, oubliée à la fin de la fonction).
+    // 4. Clé API (déchiffrée maintenant, oubliée à la fin de la fonction).
     const apiKey = await AB.settings.getApiKey(settings.provider);
 
-    // 4. Quota : réservé avant tout travail coûteux, rendu en cas d'échec.
-    const quota = await AB.premium.reserve();
+    // 5. Quota : réservé avant tout travail coûteux, rendu en cas d'échec.
+    //    Règle v2 : changer le format d'un lien DÉJÀ analysé ne consomme pas de
+    //    quota. [SecOps] La preuve vient du cache du worker (storage.session,
+    //    illisible par les pages), pas d'une affirmation du content script.
+    const isReformat = explicitFormat && (await AB.cache.hasAny(url));
+    const quota = isReformat
+      ? { ok: true, premium, remaining: null, reservation: null }
+      : await AB.premium.reserve();
     if (!quota.ok) throw new AppError('QUOTA_EXCEEDED');
     reservation = quota.reservation;
     if (signal.aborted) throw new AppError('ABORTED');
 
-    // 5. Scraping Fantôme.
+    // 6. Scraping Fantôme.
     safePost(port, { type: 'status', stage: 'fetching' });
     const article = await AB.scraper.fetchArticle(url, signal);
 
-    // 6. IA en streaming.
+    // 7. IA en streaming.
     safePost(port, { type: 'status', stage: 'thinking' });
     let answer = '';
     const stream = AB.ai.streamAnswer(
-      { provider: settings.provider, model: settings.model, apiKey, article, linkText },
+      {
+        provider: settings.provider,
+        model: settings.model,
+        apiKey,
+        article,
+        linkText,
+        language: settings.language,
+        format,
+      },
       signal
     );
     for await (const event of stream) {
@@ -135,19 +164,22 @@ async function runSummary(port, request, signal) {
       safePost(port, { type: 'chunk', text: piece });
     }
 
-    answer = answer.trim();
+    // Mise en forme définitive (puces « • » normalisées, phrase sur une ligne).
+    answer = AB.ai.normalizeAnswer(answer, format);
     if (!answer) throw new AppError('EMPTY_ANSWER');
 
-    // 7. Succès : le quota est définitivement consommé, la réponse mise en cache
+    // 8. Succès : le quota est définitivement consommé, la réponse mise en cache
     //    (sous l'URL demandée ET l'URL finale, pour les liens raccourcis).
     committed = true;
     const entry = { text: answer, title: article.title, finalUrl: article.finalUrl };
-    await AB.cache.set(url, entry);
-    if (article.finalUrl !== url) await AB.cache.set(article.finalUrl, entry);
+    await AB.cache.set(url, variant, entry);
+    if (article.finalUrl !== url) await AB.cache.set(article.finalUrl, variant, entry);
     safePost(port, {
       type: 'done',
       cached: false,
+      text: answer,
       title: article.title,
+      format,
       quota: { premium: quota.premium, remaining: quota.remaining },
     });
   } catch (err) {
@@ -241,7 +273,14 @@ async function getState() {
 /** Actions réservées aux pages de l'extension. */
 const PAGE_HANDLERS = {
   getState: () => getState(),
-  saveSettings: (msg) => AB.settings.saveSettings(msg.settings),
+  saveSettings: async (msg) => {
+    // [SecOps] Le format « puces » ne peut être enregistré que par un Premium.
+    const wanted = msg.settings && typeof msg.settings === 'object' ? msg.settings : {};
+    if (AB.settings.isPremiumFormat(wanted.format) && !(await AB.premium.isPremium())) {
+      throw new AppError('PREMIUM_REQUIRED');
+    }
+    return AB.settings.saveSettings(wanted);
+  },
   saveApiKey: async (msg) => ({ hint: await AB.settings.setApiKey(msg.provider, msg.key) }),
   deleteApiKey: (msg) => AB.settings.deleteApiKey(msg.provider),
   testApiKey: async (msg) => {

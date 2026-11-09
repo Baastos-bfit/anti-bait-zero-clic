@@ -137,7 +137,12 @@
   }
 
   function onStorageChanged(changes, area) {
-    if (area === 'local' && changes.settings) applySettings(changes.settings.newValue);
+    if (area === 'local' && changes.settings) {
+      applySettings(changes.settings.newValue);
+      // v2 : la langue ou le format a pu changer — les réponses mémorisées
+      // dans l'onglet ne correspondent plus au réglage.
+      clientCache.clear();
+    }
   }
 
   try {
@@ -364,7 +369,8 @@
         current.finished = true;
         const text = typeof msg.text === 'string' ? msg.text : current.text;
         remember(current.url, text);
-        tooltip.setFinal({ text: msg.cached ? text : undefined, cached: Boolean(msg.cached), quota: msg.quota });
+        // Le texte final (mis en forme par le worker) remplace le flux brut.
+        tooltip.setFinal({ text, cached: Boolean(msg.cached), quota: msg.quota });
         closeJob(current);
         break;
       }

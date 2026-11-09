@@ -422,6 +422,7 @@
       ui.answer.hidden = true;
       ui.answer.classList.remove('streaming');
       ui.status.hidden = true;
+      ui.statusLabel.textContent = '';
       ui.error.hidden = true;
       ui.errorMsg.textContent = '';
       ui.action.textContent = '';

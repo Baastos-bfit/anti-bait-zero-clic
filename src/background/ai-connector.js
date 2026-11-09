@@ -50,10 +50,57 @@
   }
 
   /**
-   * Construit les messages système et utilisateur.
-   * @param {{linkText: string, title: string, description: string, text: string, finalUrl: string}} input
+   * Résout le réglage de langue en consigne pour le modèle.
+   * [SecOps] Seules des chaînes écrites ici atteignent le prompt : le réglage
+   * n'est qu'un sélecteur dans une liste fermée (validée par settings.js).
+   * @param {'browser'|'fr'|'article'} language
+   * @returns {{id: string, instruction: string}} id sert aussi à la clé de cache.
    */
-  function buildPrompt({ linkText, title, description, text, finalUrl }) {
+  function resolveLanguage(language) {
+    if (language === 'fr') {
+      return { id: 'fr', instruction: 'Réponds en français, même si l’article est rédigé dans une autre langue (traduis-le).' };
+    }
+    if (language === 'article') {
+      return {
+        id: 'article',
+        instruction:
+          'Réponds dans la langue principale de l’article (le texte entre balises <article>), même si ces consignes sont en français.',
+      };
+    }
+    let code = 'fr';
+    try {
+      code = (chrome.i18n.getUILanguage() || 'fr').split('-')[0].toLowerCase();
+    } catch {
+      /* hors navigateur : français par défaut */
+    }
+    return { id: 'ui-' + code, instruction: `Réponds en ${uiLanguageName()}.` };
+  }
+
+  /** Consignes de longueur et de forme propres à chaque format. */
+  const FORMAT_RULES = Object.freeze({
+    sentence: [
+      '- Une seule phrase, 40 mots maximum.',
+      '- Commence directement par la réponse, sans introduction ni formule du type « L’article explique que ».',
+      '- Texte brut uniquement : pas de Markdown, pas de liste.',
+    ],
+    bullets: [
+      '- 2 ou 3 puces maximum, une par ligne, chacune commençant par « • » suivi d’une espace.',
+      '- La première puce donne directement la réponse que le titre cache ; les suivantes, le contexte utile.',
+      '- 20 mots maximum par puce, pas d’introduction ni de conclusion.',
+      '- Texte brut uniquement : aucun autre symbole de liste, pas de Markdown (pas de **, #, -, *, ni numérotation).',
+    ],
+  });
+
+  /** Plafond de jetons OpenAI par format (les puces sont plus longues). */
+  const OPENAI_MAX_TOKENS = Object.freeze({ sentence: 300, bullets: 600 });
+
+  /**
+   * Construit les messages système et utilisateur.
+   * @param {{linkText: string, title: string, description: string, text: string, finalUrl: string,
+   *          language?: string, format?: string}} input
+   */
+  function buildPrompt({ linkText, title, description, text, finalUrl, language = 'browser', format = 'sentence' }) {
+    const rules = FORMAT_RULES[format] || FORMAT_RULES.sentence;
     const system = [
       'Tu es « Anti-Bait », un assistant qui désamorce les titres racoleurs (« putaclic »).',
       'On te fournit le texte d’un lien et le contenu de la page qu’il cible, entre balises <article>.',
@@ -61,11 +108,9 @@
       '',
       'Ta mission : donner immédiatement la réponse concrète que le titre cache (le nom, le chiffre, le fait, le verdict).',
       'Règles :',
-      '- 1 à 3 phrases, 60 mots maximum.',
-      '- Commence directement par la réponse, sans introduction ni formule du type « L’article explique que ».',
+      ...rules,
       '- N’invente rien. Si le contenu ne permet pas de répondre (paywall, page vide, hors sujet), dis-le en une phrase.',
-      '- Texte brut uniquement : pas de Markdown, pas de listes.',
-      `- Réponds en ${uiLanguageName()}.`,
+      `- ${resolveLanguage(language).instruction}`,
     ].join('\n');
 
     // Neutralise toute tentative de fermer notre balise depuis le contenu tiers.
@@ -218,14 +263,14 @@
 
   // ── OpenAI ──────────────────────────────────────────────────────────────
 
-  function openaiRequest({ model, apiKey, prompt }) {
+  function openaiRequest({ model, apiKey, prompt, format }) {
     return {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
         model,
         stream: true,
-        max_completion_tokens: 400,
+        max_completion_tokens: OPENAI_MAX_TOKENS[format] || OPENAI_MAX_TOKENS.sentence,
         messages: [
           { role: 'system', content: prompt.system },
           { role: 'user', content: prompt.user },
@@ -262,14 +307,37 @@
   // ── API publique ────────────────────────────────────────────────────────
 
   /**
+   * Remet la réponse finale en forme (cache et affichage définitif).
+   * [QA] Les modèles mélangent parfois « - », « * », « 1. » ou du gras malgré la
+   * consigne : en mode puces, chaque ligne non vide devient « • texte » (3 max).
+   * En mode phrase, les retours à la ligne parasites sont fusionnés.
+   * @param {string} text
+   * @param {'sentence'|'bullets'} format
+   */
+  function normalizeAnswer(text, format) {
+    const clean = String(text || '').replace(/\*\*|__/g, '').trim();
+    if (format !== 'bullets') return clean.replace(/\s*\n+\s*/g, ' ');
+    const lines = clean
+      .split('\n')
+      .map((l) => l.replace(/^\s*(?:[•\-*–·]|\d+[.)])\s*/, '').trim())
+      .filter(Boolean);
+    if (lines.length <= 1) return clean.replace(/^\s*(?:[•\-*–·]|\d+[.)])\s*/, ''); // réponse non découpée : on la garde telle quelle
+    return lines
+      .slice(0, 3)
+      .map((l) => '• ' + l)
+      .join('\n');
+  }
+
+  /**
    * Diffuse la réponse IA pour un article.
-   * @param {{provider: string, model: string, apiKey: string, article: object, linkText: string}} params
+   * @param {{provider: string, model: string, apiKey: string, article: object, linkText: string,
+   *          language?: string, format?: string}} params
    * @param {AbortSignal} signal  Annulation utilisateur (survol abandonné).
    */
-  function streamAnswer({ provider, model, apiKey, article, linkText }, signal) {
+  function streamAnswer({ provider, model, apiKey, article, linkText, language, format }, signal) {
     const combined = AbortSignal.any([signal, AbortSignal.timeout(CONFIG.AI_TIMEOUT_MS)]);
-    const prompt = buildPrompt({ ...article, linkText });
-    const params = { model, apiKey, prompt };
+    const prompt = buildPrompt({ ...article, linkText, language, format });
+    const params = { model, apiKey, prompt, format };
     if (provider === 'anthropic') return streamAnthropic(params, combined);
     if (provider === 'openai') return streamOpenAI(params, combined);
     throw new AB.AppError('BAD_REQUEST', 'Fournisseur IA inconnu.');
@@ -300,5 +368,13 @@
     return { ok: true };
   }
 
-  AB.ai = Object.freeze({ buildPrompt, streamAnswer, testKey, supportsEffort, supportsFallback });
+  AB.ai = Object.freeze({
+    buildPrompt,
+    resolveLanguage,
+    normalizeAnswer,
+    streamAnswer,
+    testKey,
+    supportsEffort,
+    supportsFallback,
+  });
 })(globalThis);
