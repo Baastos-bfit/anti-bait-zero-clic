@@ -133,7 +133,7 @@ Cochez ensuite les trois certifications :
 
 ### URL de la politique de confidentialité
 ```
-[URL PUBLIQUE OÙ EST HÉBERGÉ marketing/PRIVACY_POLICY.md]
+https://baastos-bfit.github.io/anti-bait-zero-clic/marketing/PRIVACY_POLICY.html
 ```
 Le Web Store exige une URL accessible publiquement. Options simples : une page Google Sites, Notion publique ou GitHub Pages.
 

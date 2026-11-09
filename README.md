@@ -14,6 +14,8 @@
   <a href="#-configurer-votre-clé-api">Clé API</a> ·
   <a href="#-gratuit-ou-premium">Tarifs</a> ·
   <a href="https://baastos-bfit.github.io/anti-bait-zero-clic/marketing/PRIVACY_POLICY.html">Confidentialité</a> ·
+  <a href="https://baastos-bfit.github.io/anti-bait-zero-clic/cgv/">CGV</a> ·
+  <a href="https://baastos-bfit.github.io/anti-bait-zero-clic/mentions-legales/">Mentions légales</a> ·
   <a href="#-questions-fréquentes">FAQ</a>
 </p>
 
@@ -142,13 +144,15 @@ Anti-Bait utilise un service d'intelligence artificielle pour lire les articles.
 
 | | Gratuit | Premium |
 |---|:---:|:---:|
-| Prix | 0 € | **3,99 €**, paiement unique, à vie |
+| Prix | 0 € | **3,99 €**, paiement unique |
 | Analyses par jour | 10 | **Illimitées** |
 | Réponses déjà analysées | ✅ illimitées | ✅ illimitées |
 | X, LinkedIn, sites d'actualité | ✅ | ✅ |
 | Choix du fournisseur et du modèle d'IA | ✅ | ✅ |
 
-La version Premium s'achète en **un seul paiement de 3,99 €**, valable à vie, sans abonnement, depuis les réglages (bouton **Passer Premium**). Le paiement est sécurisé par **ExtensionPay** et **Stripe** : aucune donnée bancaire ne transite par l'extension.
+La version Premium s'achète en **un seul paiement de 3,99 €**, sans abonnement ni date d'expiration, depuis les réglages (bouton **Passer Premium**). Le paiement est sécurisé par **ExtensionPay** et **Stripe** : aucune donnée bancaire ne transite par l'extension.
+
+**Satisfait ou remboursé pendant 14 jours**, sans justification. Le prix ne comprend pas le coût d'utilisation de l'IA, facturé directement par votre fournisseur. Voir les [conditions générales de vente](https://baastos-bfit.github.io/anti-bait-zero-clic/cgv/).
 
 ---
 
@@ -223,7 +227,9 @@ npm run icons     # régénère les icônes
 
 ---
 
-## 📜 Licence
+## 📜 Licence et informations légales
 
-© 2026 — Tous droits réservés. Le code source est consultable mais **n'est pas sous licence libre** : voir [LICENSE](LICENSE).
+© 2026 Bastien Bluon (EI) — Tous droits réservés. Le code source est consultable mais **n'est pas sous licence libre** : voir [LICENSE](LICENSE).
 Composants tiers : voir [vendor/THIRD_PARTY_NOTICES.md](vendor/THIRD_PARTY_NOTICES.md).
+
+📄 [Mentions légales](https://baastos-bfit.github.io/anti-bait-zero-clic/mentions-legales/) · [Conditions générales de vente et d'utilisation](https://baastos-bfit.github.io/anti-bait-zero-clic/cgv/) · [Politique de confidentialité](marketing/PRIVACY_POLICY.md)

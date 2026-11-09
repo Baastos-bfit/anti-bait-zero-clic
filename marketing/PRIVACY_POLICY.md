@@ -2,7 +2,7 @@
 
 **Dernière mise à jour : 7 novembre 2026**
 
-Anti-Bait Zéro Clic (« l'extension ») est une extension pour Google Chrome éditée par **Bluon Bastien** (« nous »). Cette politique explique quelles données l'extension traite, où elles vont et comment vous gardez le contrôle.
+Anti-Bait Zéro Clic (« l'extension ») est une extension pour Google Chrome éditée par **Bastien Bluon** (« nous »). Cette politique explique quelles données l'extension traite, où elles vont et comment vous gardez le contrôle.
 
 **En résumé :** nous n'avons aucun serveur et nous ne recevons aucune de vos données. L'extension fonctionne dans votre navigateur. Elle envoie le texte d'un article au fournisseur d'intelligence artificielle que **vous** avez choisi, avec **votre** clé API, et seulement quand vous survolez un lien. Nous ne faisons ni publicité, ni pistage, ni revente de données.
 
@@ -110,4 +110,4 @@ Toute modification de cette politique sera publiée sur cette page, avec une nou
 
 ## 11. Contact
 
-**Bluon Bastien** : [jetmonster@hotmail.fr](mailto:jetmonster@hotmail.fr)
+**Bastien Bluon** : [jetmonster@hotmail.fr](mailto:jetmonster@hotmail.fr)
