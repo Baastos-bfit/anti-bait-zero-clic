@@ -58,6 +58,9 @@ Pas de clic, pas de page chargée, pas de publicité.
 | 🎨 **Discrète** | S'adapte au thème clair ou sombre, sans jamais modifier l'apparence des sites |
 | 🔒 **Respectueuse** | Aucun serveur intermédiaire, aucun pistage, clé API chiffrée sur votre appareil |
 | 🤖 **Votre IA** | Anthropic (Claude) ou OpenAI, avec votre propre clé |
+| 🌍 **Votre langue** *(v2)* | Réponses dans la langue du navigateur, toujours en français (traduction des articles étrangers) ou dans la langue de l'article |
+| 📝 **Format puces** *(v2, Premium)* | La réponse et son contexte en 3 points, par défaut ou d'un clic dans la bulle |
+| ⏱ **Temps gagné** *(v2, Premium)* | Vos clics évités et le temps récupéré, calculés uniquement sur votre appareil |
 
 ---
 
@@ -136,7 +139,9 @@ Anti-Bait utilise un service d'intelligence artificielle pour lire les articles.
 
 **Ajouter un site d'actualité :** dans les réglages, section **3 – Sites de médias**, tapez par exemple `lemonde.fr`, cliquez sur **Ajouter**, puis rechargez la page du site.
 
-**Raccourcis :** `Échap` ferme la bulle. Le délai de survol se règle dans la section **4 – Comportement**.
+**Raccourcis :** `Échap` ferme la bulle. Le délai de survol se règle dans la section **5 – Comportement**.
+
+**Langue et format** *(v2)* : section **4 – Réponses de l’IA** des réglages. Le format peut aussi être changé pour un lien précis, directement dans la bulle (« Une phrase » / « Puces »).
 
 ---
 
@@ -149,6 +154,10 @@ Anti-Bait utilise un service d'intelligence artificielle pour lire les articles.
 | Réponses déjà analysées | ✅ illimitées | ✅ illimitées |
 | X, LinkedIn, sites d'actualité | ✅ | ✅ |
 | Choix du fournisseur et du modèle d'IA | ✅ | ✅ |
+| Langue des réponses (dont traduction en français) | ✅ | ✅ |
+| Format « Une phrase » | ✅ | ✅ |
+| Format « Puces » (3 points) | 🔒 | ✅ |
+| Statistiques de temps gagné | 🔒 | ✅ |
 
 La version Premium s'achète en **un seul paiement de 3,99 €**, sans abonnement ni date d'expiration, depuis les réglages (bouton **Passer Premium**). Le paiement est sécurisé par **ExtensionPay** et **Stripe** : aucune donnée bancaire ne transite par l'extension.
 

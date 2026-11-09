@@ -103,3 +103,40 @@ Chaque tâche du [TODO](../TODO.md) a été soumise à la confrontation entre le
 | QA | Un échec ne doit pas consommer de quota | Réservation remboursée en cas d'erreur ou d'annulation |
 
 ### 3.3 Audit SecOps final → [SECURITY.md](SECURITY.md)
+
+---
+
+## Phase 4 : Version 2.0.0
+
+### 4.1 à 4.3 Réglages, prompt conditionnel, cache → [`settings.js`](../src/background/settings.js), [`ai-connector.js`](../src/background/ai-connector.js), [`cache.js`](../src/background/cache.js)
+| Qui | Objection | Résolution |
+|---|---|---|
+| SecOps | Une valeur libre de l'utilisateur ne doit pas atteindre le prompt | Langue et format choisis dans des listes fermées ; seules des consignes écrites en dur entrent dans le prompt |
+| SecOps | Le format puces doit rester réservé au Premium, même si l'interface est contournée | Format effectif décidé par le worker (`effectiveFormat`), avec le statut ExtensionPay ; `PREMIUM_REQUIRED` sinon |
+| QA | Une réponse en cache ne doit pas être resservie dans une autre langue ou un autre format | Clé de cache composite URL × langue × format ; cache de l'onglet vidé à chaque changement de réglage |
+| SecOps | « Changer de format sans quota » ne doit pas être falsifiable | Preuve tirée du cache du worker (`storage.session`, illisible par les pages), pas du content script |
+
+### 4.4 Sélecteur de format dans l'infobulle → [`tooltip-ui.js`](../src/content/tooltip-ui.js)
+| Qui | Objection | Résolution |
+|---|---|---|
+| QA | Le CSS de X/LinkedIn pourrait casser les boutons | Shadow DOM fermé + `all: unset` ; vérifié en E2E avec une feuille de style hostile |
+| QA | Cliquer dans l'infobulle ne doit pas la fermer ni déclencher les scripts de la page | Clics isolés au niveau de la carte ; seul un clic sur un lien ferme l'infobulle |
+| QA | **Trouvé en E2E** : la carte basculait au-dessus du lien après le passage aux puces et se fermait sous la souris | Position verrouillée pendant un changement de format, sélecteur placé en haut de la carte |
+| QA | **Trouvé en E2E** : l'ouverture de l'onglet de paiement fermait l'infobulle avant que l'incitation soit lue | Seule une analyse en cours est annulée quand l'onglet passe en arrière-plan |
+
+### 4.5 Statistiques → [`stats.js`](../src/background/stats.js)
+| Qui | Objection | Résolution |
+|---|---|---|
+| QA | Survoler le même lien en boucle gonflerait le compteur | Un clic évité au plus par article (URL finale) et par jour, file sérialisée entre onglets |
+| SecOps | Le registre de déduplication ne doit pas devenir un historique de navigation | Empreintes SHA-256 tronquées, aucune URL, registre remplacé chaque jour et plafonné |
+| SecOps | Statistiques réservées au Premium | Le worker ne renvoie aucun chiffre à un compte gratuit (`{ locked: true }`) ; l'effacement reste ouvert à tous |
+
+### 4.6 Page d'options → [`options.*`](../src/options/)
+| Qui | Objection | Résolution |
+|---|---|---|
+| SecOps | L'aperçu flouté ne doit pas contenir les vraies données d'un compte gratuit | Aperçu factice ; le worker ne transmet jamais les chiffres |
+| QA | Confirmation de remise à zéro accessible et cohérente avec le thème | `<dialog>` natif (Échap, focus piégé, thème clair/sombre) |
+| QA | **Trouvé sur capture** : l'aperçu flou masquait le texte incitatif | Encadré incitatif remonté au premier plan |
+
+### 4.7 Livraison
+Version 2.0.0, politique de confidentialité mise à jour (compteur local, registre anonymisé du jour), fiche du Store (nouveautés v2), 3 captures 1280 × 800 générées depuis la vraie interface (`tools/store-screenshots.mjs`), paquet `dist/anti-bait-2.0.0.zip`.

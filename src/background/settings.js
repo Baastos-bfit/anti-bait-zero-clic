@@ -2,7 +2,7 @@
  * Anti-Bait Zéro Clic — Réglages et clés API
  * ===========================================
  * Disposition de chrome.storage.local :
- *   settings     : { enabled, provider, model, hoverDelayMs }    (clair, non sensible)
+ *   settings     : { enabled, provider, model, hoverDelayMs, language, format } (clair, non sensible)
  *   apiKeys      : { anthropic?: {v,iv,ct,hint}, openai?: {...} } (CHIFFRÉ via vault)
  *   mediaDomains : ['lemonde.fr', ...]                           (clair)
  *   quota, premiumLastKnown                                      (CHIFFRÉS, voir premium.js)
@@ -36,7 +36,28 @@
       provider,
       model,
       hoverDelayMs: Number.isFinite(delay) ? Math.round(Math.min(2000, Math.max(200, delay))) : d.hoverDelayMs,
+      // v2 : listes fermées uniquement — aucune valeur libre n'atteint le prompt.
+      language: CONFIG.LANGUAGES.includes(s.language) ? s.language : d.language,
+      format: CONFIG.FORMATS.includes(s.format) ? s.format : d.format,
     };
+  }
+
+  /** Vrai si le format exige la version Premium. */
+  function isPremiumFormat(format) {
+    return CONFIG.PREMIUM_FORMATS.includes(format);
+  }
+
+  /**
+   * Format réellement appliqué. [SecOps] Seul le service worker l'appelle, avec
+   * le statut Premium vérifié auprès d'ExtensionPay : un utilisateur gratuit
+   * obtient toujours « sentence », quel que soit le réglage stocké ou demandé.
+   * Un Premium remboursé redescend ainsi automatiquement, sans réglage cassé.
+   * @param {string} requested Format souhaité (réglage ou demande de l'infobulle).
+   * @param {boolean} premium
+   */
+  function effectiveFormat(requested, premium) {
+    const format = CONFIG.FORMATS.includes(requested) ? requested : CONFIG.DEFAULT_SETTINGS.format;
+    return isPremiumFormat(format) && !premium ? CONFIG.DEFAULT_SETTINGS.format : format;
   }
 
   async function getSettings() {
@@ -117,6 +138,8 @@
 
   AB.settings = Object.freeze({
     sanitizeSettings,
+    isPremiumFormat,
+    effectiveFormat,
     getSettings,
     saveSettings,
     setApiKey,

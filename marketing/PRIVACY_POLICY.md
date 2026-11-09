@@ -1,6 +1,6 @@
 # Politique de confidentialité : Anti-Bait Zéro Clic
 
-**Dernière mise à jour : 7 novembre 2026**
+**Dernière mise à jour : 9 novembre 2026 (version 2.0.0)**
 
 Anti-Bait Zéro Clic (« l'extension ») est une extension pour Google Chrome éditée par **Bastien Bluon** (« nous »). Cette politique explique quelles données l'extension traite, où elles vont et comment vous gardez le contrôle.
 
@@ -14,7 +14,7 @@ Quand vous laissez le pointeur de la souris environ une demi-seconde sur un lien
 
 1. télécharge la page de l'article, sans vos cookies ;
 2. en extrait le texte ;
-3. demande à un service d'IA de résumer en une ou deux phrases la réponse que le titre cache ;
+3. demande à un service d'IA de résumer la réponse que le titre cache, en une phrase ou en quelques puces, dans la langue de réponse que vous avez choisie ;
 4. affiche cette réponse dans une infobulle.
 
 L'extension n'agit **que** sur les liens que vous survolez, et uniquement sur les sites où elle est activée.
@@ -26,12 +26,16 @@ Ces données restent dans votre navigateur. Nous n'y avons pas accès.
 | Donnée                                                          | Pourquoi                                                | Protection                                                                    | Durée                                        |
 | --------------------------------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------- | -------------------------------------------- |
 | Clé API de votre fournisseur d'IA                               | Appeler le service d'IA en votre nom                    | Chiffrée (AES-GCM 256 bits) ; jamais réaffichée en entier                     | Jusqu'à sa suppression ou la désinstallation |
-| Réglages (fournisseur, modèle, délai de survol, activation)     | Fonctionnement de l'extension                           | -                                                                             | Jusqu'à la désinstallation                   |
+| Réglages (fournisseur, modèle, délai de survol, activation, langue et format des réponses) | Fonctionnement de l'extension | - | Jusqu'à la désinstallation |
 | Liste des sites d'actualité que vous avez ajoutés               | Activer l'extension sur ces sites                       | -                                                                             | Jusqu'à leur retrait ou la désinstallation   |
 | Compteur d'analyses du jour et statut Premium                   | Appliquer la limite de la version gratuite              | Chiffrés                                                                      | Renouvelé chaque jour                        |
 | Réponses déjà obtenues (réponse, titre et adresse de l'article) | Réafficher instantanément une réponse sans nouvel appel | Gardées en mémoire, jamais écrites sur le disque, inaccessibles aux sites web | **Effacées à la fermeture du navigateur**    |
+| Compteur de clics évités (nombre total et date de départ) | Afficher vos statistiques de temps gagné (version Premium) | Un simple nombre : aucune adresse, aucun titre, aucun contenu | Jusqu'à sa remise à zéro ou la désinstallation |
+| Registre quotidien anonymisé : empreintes cryptographiques tronquées (16 caractères) des articles déjà comptés aujourd'hui | Ne compter qu'un seul clic évité par article et par jour | **Aucune adresse (URL) n'est stockée** : une empreinte ne contient pas l'adresse et ne permet pas de la retrouver | **Remplacé chaque jour à minuit**, limité à 5 000 entrées, effacé à la remise à zéro |
 
 L'extension ne conserve **aucun historique de navigation**.
+
+**Statistiques de temps gagné (depuis la version 2.0.0).** Chaque réponse affichée compte comme un « clic évité », au plus une fois par article et par jour. Le temps gagné est une estimation (2 minutes par clic évité), calculée à l'affichage. Le comptage a lieu **uniquement sur votre appareil**, y compris en version gratuite, pour que vos statistiques soient prêtes si vous passez Premium. Ces données ne sont **jamais transmises**, ni à nous, ni à un tiers. Vous pouvez les effacer à tout moment dans les réglages (« Remettre à zéro » ou « Effacer ces données »).
 
 ## 3. Données transmises à des tiers
 
@@ -75,7 +79,7 @@ La version Premium (paiement unique) est gérée par **ExtensionPay** (extension
 
 | Autorisation                                            | Usage                                                                 |
 | ------------------------------------------------------- | --------------------------------------------------------------------- |
-| Stockage                                                | Enregistrer vos réglages, votre clé chiffrée et le cache des réponses |
+| Stockage                                                | Enregistrer vos réglages, votre clé chiffrée, le cache des réponses et le compteur de clics évités |
 | Scripts sur les sites d'actualité ajoutés               | Détecter le survol des liens sur les sites que **vous** avez choisis  |
 | Accès à X/Twitter et LinkedIn                           | Détecter le survol des liens sur ces plateformes                      |
 | Accès aux sites HTTPS (facultatif, demandé par un clic) | Télécharger l'article derrière le lien survolé                        |
@@ -86,6 +90,7 @@ Vous pouvez retirer l'accès aux sites à tout moment, depuis les réglages de l
 ## 6. Vos droits et votre contrôle
 
 - **Supprimer votre clé API** : bouton « Supprimer la clé » dans les réglages.
+- **Effacer vos statistiques** : bouton « Remettre à zéro » (Premium) ou lien « Effacer ces données » (version gratuite), section « Vos statistiques » des réglages. Le compteur et le registre quotidien sont supprimés immédiatement.
 - **Désactiver l'extension** : interrupteur « Activer Anti-Bait » dans les réglages.
 - **Tout effacer** : désinstaller l'extension supprime toutes les données stockées sur votre appareil. Le cache des réponses est de toute façon effacé à la fermeture du navigateur.
 - **Données détenues par des tiers** : pour les données traitées par Anthropic, OpenAI, ExtensionPay ou Stripe, adressez-vous à eux (liens ci-dessus).

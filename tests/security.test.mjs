@@ -106,12 +106,21 @@ test('settings : assainissement des réglages', async () => {
   const { ctx } = await loadVaultContext(['src/background/settings.js']);
   const s = ctx.AntiBait.settings.sanitizeSettings;
   const plain = (o) => JSON.parse(JSON.stringify(o));
-  assert.deepEqual(plain(s({})), { enabled: true, provider: 'anthropic', model: 'claude-opus-5-5', hoverDelayMs: 600 });
+  assert.deepEqual(plain(s({})), {
+    enabled: true,
+    provider: 'anthropic',
+    model: 'claude-opus-5-5',
+    hoverDelayMs: 600,
+    language: 'browser',
+    format: 'sentence',
+  });
   assert.deepEqual(plain(s({ provider: 'openai', model: 'claude-opus-5-5', hoverDelayMs: 99999 })), {
     enabled: true,
     provider: 'openai',
     model: 'gpt-4.1-mini',
     hoverDelayMs: 2000,
+    language: 'browser',
+    format: 'sentence',
   });
   assert.equal(s({ provider: '__proto__' }).provider, 'anthropic');
   assert.equal(s({ model: '<script>' }).model, 'claude-opus-5-5');

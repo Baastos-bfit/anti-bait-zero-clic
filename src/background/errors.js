@@ -32,6 +32,10 @@
       message: 'Clé API refusée par le fournisseur. Vérifiez-la dans les réglages.',
       action: 'open-options',
     },
+    PREMIUM_REQUIRED: {
+      message: 'Cette fonction est réservée à la version Premium.',
+      action: 'upgrade',
+    },
     QUOTA_EXCEEDED: {
       message: 'Limite gratuite du jour atteinte. Passez Premium pour des analyses illimitées.',
       action: 'upgrade',

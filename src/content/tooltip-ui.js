@@ -34,7 +34,19 @@
   const STAGE_LABELS = {
     fetching: 'Lecture de l’article…',
     thinking: 'L’IA cherche la réponse…',
+    reformatting: 'Mise en forme…',
   };
+
+  /** v2 : formats proposés dans le sélecteur (« bullets » = Premium). */
+  const FORMAT_LABELS = { sentence: 'Une phrase', bullets: 'Puces' };
+  const PREMIUM_FORMATS = ['bullets'];
+
+  /**
+   * [QA] Événements stoppés au niveau de la carte : les gestionnaires de la page
+   * hôte (X, LinkedIn) ne voient jamais nos clics (ex. fermeture d'un menu).
+   * Nos propres écouteurs, en phase de capture sur document, restent informés.
+   */
+  const ISOLATED_EVENTS = ['click', 'dblclick', 'pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchend'];
 
   /** Styles de l'hôte : neutralise tout CSS hérité ou forcé par le site. */
   const HOST_STYLE = [
@@ -67,6 +79,8 @@
       --ab-accent-fg: #ffffff;
       --ab-error-bg: #fff1ee;
       --ab-error-fg: #a1260f;
+      --ab-chip-bg: #eff3f4;
+      --ab-notice-bg: #fff4e5;
       position: fixed;
       top: 0;
       left: 0;
@@ -102,6 +116,8 @@
         --ab-border: rgba(255, 255, 255, 0.14);
         --ab-error-bg: #3a1d17;
         --ab-error-fg: #ffb4a3;
+        --ab-chip-bg: #2a2f36;
+        --ab-notice-bg: #3a2a10;
         box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
       }
     }
@@ -154,7 +170,44 @@
       color: var(--ab-muted);
       font-size: 13px;
     }
-    .status[hidden], .answer[hidden], .error[hidden], .footer[hidden], .action[hidden] { display: none; }
+    .status[hidden], .answer[hidden], .error[hidden], .footer[hidden], .action[hidden],
+    .formats[hidden], .notice[hidden] { display: none; }
+    .formats {
+      display: flex;
+      gap: 2px;
+      width: max-content;
+      margin: 0 0 8px;
+      padding: 3px;
+      border-radius: 999px;
+      background: var(--ab-chip-bg);
+    }
+    .fmt {
+      all: unset;
+      box-sizing: border-box;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font: 600 12px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: var(--ab-muted);
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .fmt:hover { color: var(--ab-fg); }
+    .fmt[aria-pressed="true"] {
+      background: var(--ab-bg);
+      color: var(--ab-fg);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+    }
+    .fmt[data-locked="true"] { color: var(--ab-muted); }
+    .fmt:focus-visible { outline: 2px solid var(--ab-accent); outline-offset: 1px; }
+    .fmt:disabled { cursor: progress; opacity: 0.6; }
+    .notice {
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: var(--ab-notice-bg);
+      color: var(--ab-fg);
+      font-size: 12px;
+    }
     .spinner {
       width: 14px;
       height: 14px;
@@ -169,6 +222,18 @@
       font-weight: 500;
       white-space: pre-wrap;
     }
+    /* v2 : réponse en puces — vraie liste, retrait propre des lignes suivantes. */
+    .bullets {
+      margin: 0;
+      padding: 0 0 0 1.2em;
+      font-size: 15px;
+      font-weight: 500;
+      list-style: disc outside;
+    }
+    .bullets[hidden] { display: none; }
+    .bullets li { margin: 0 0 4px; padding-left: 2px; }
+    .bullets li:last-child { margin-bottom: 0; }
+    .bullets li::marker { color: var(--ab-accent); }
     .answer.streaming::after {
       content: "▍";
       margin-left: 1px;
@@ -274,23 +339,45 @@
       this.pendingText = '';
       this.ui.textNode.data = '';
       this.ui.answer.hidden = true;
+      this._clearBullets();
     }
 
     /**
      * État final.
-     * @param {{text?: string, cached?: boolean, quota?: {premium: boolean, remaining: number}}} p
+     * @param {{text?: string, cached?: boolean, format?: string,
+     *          quota?: {premium: boolean, remaining: number}}} p
+     *   format (v2) : « bullets » affiche la réponse en vraie liste.
      */
-    setFinal({ text, cached, quota } = {}) {
+    setFinal({ text, cached, quota, format } = {}) {
       if (!this.visible) return;
       this._flush();
+      this.ui.card.style.minHeight = '';
       if (typeof text === 'string') this.ui.textNode.data = text;
       if (this.ui.textNode.length === 0) {
         this.setError({ message: 'Aucune réponse obtenue pour ce lien.' });
         return;
       }
       this.ui.status.hidden = true;
-      this.ui.answer.hidden = false;
       this.ui.answer.classList.remove('streaming');
+      // v2 : puces rendues en <ul>/<li> (texte brut via textContent, jamais d'HTML).
+      const lines =
+        format === 'bullets'
+          ? this.ui.textNode.data.split('\n').map((l) => l.replace(/^\s*•\s*/, '').trim()).filter(Boolean)
+          : [];
+      if (lines.length > 1) {
+        this.ui.bullets.replaceChildren(
+          ...lines.map((line) => {
+            const li = el('li');
+            li.textContent = line;
+            return li;
+          })
+        );
+        this.ui.bullets.hidden = false;
+        this.ui.answer.hidden = true;
+      } else {
+        this._clearBullets();
+        this.ui.answer.hidden = false;
+      }
       let footer = '';
       if (cached) footer = 'Réponse instantanée (déjà analysée)';
       else if (quota && !quota.premium && Number.isFinite(quota.remaining)) {
@@ -305,14 +392,86 @@
     setError({ message, actionLabel, onAction }) {
       if (!this.visible) return;
       this._cancelFlush();
+      this.ui.card.style.minHeight = '';
       this.ui.status.hidden = true;
       this.ui.answer.hidden = true;
+      this._clearBullets();
       this.ui.footer.hidden = true;
+      this.ui.formats.hidden = true;
+      this.ui.notice.hidden = true;
       this.ui.errorMsg.textContent = message;
       this.ui.error.hidden = false;
       this.onAction = typeof onAction === 'function' ? onAction : null;
       this.ui.action.textContent = actionLabel || '';
       this.ui.action.hidden = !(actionLabel && this.onAction);
+      this.scheduleReposition();
+    }
+
+    /**
+     * v2 : affiche le sélecteur de format sous une réponse finale.
+     * [SecOps] Le cadenas est purement indicatif : le service worker refuse de
+     * toute façon le format « puces » à un compte gratuit.
+     * @param {{current: string, premium: boolean, onSelect: (format: string) => void}} p
+     */
+    setFormatOptions({ current, premium, onSelect }) {
+      if (!this.visible) return;
+      this.onFormatSelect = typeof onSelect === 'function' ? onSelect : null;
+      for (const btn of this.ui.formatButtons) {
+        const format = btn.dataset.format;
+        const locked = PREMIUM_FORMATS.includes(format) && !premium;
+        btn.textContent = (locked ? '🔒 ' : '') + FORMAT_LABELS[format];
+        btn.dataset.locked = String(locked);
+        btn.title = locked ? 'Réservé à la version Premium' : '';
+        btn.setAttribute('aria-pressed', String(format === current));
+        btn.setAttribute('aria-label', FORMAT_LABELS[format] + (locked ? ' (version Premium)' : ''));
+        btn.disabled = false;
+      }
+      this.ui.formats.hidden = false;
+      this.scheduleReposition();
+    }
+
+    /**
+     * v2 : fige la position de la carte pendant un changement de format.
+     * [QA] Sans ce verrou, une réponse plus haute (puces) peut faire basculer la
+     * carte au-dessus du lien : elle s'éloigne de la souris posée sur le
+     * sélecteur, le pointeur « sort » de la carte et l'infobulle se ferme
+     * (constaté en test E2E). Verrouillée, la carte grandit vers le bas et sa
+     * hauteur est plafonnée à l'espace disponible (le contenu défile au besoin).
+     * Déverrouillée à la fermeture ou au survol d'un autre lien.
+     */
+    lockPosition() {
+      if (!this.visible || !this.ui || this.lock) return;
+      const r = this.ui.card.getBoundingClientRect();
+      this.lock = { top: r.top, left: r.left };
+    }
+
+    /** v2 : un autre format est demandé — on vide la réponse et on patiente. */
+    showReformatting() {
+      if (!this.visible) return;
+      this.lockPosition();
+      this._cancelFlush();
+      this.pendingText = '';
+      const ui = this.ui;
+      // [QA] Hauteur figée pendant l'attente : la carte ne rétrécit pas sous la souris.
+      ui.card.style.minHeight = `${ui.card.offsetHeight}px`;
+      ui.textNode.data = '';
+      this._clearBullets();
+      ui.answer.hidden = true;
+      ui.answer.classList.remove('streaming');
+      ui.error.hidden = true;
+      ui.notice.hidden = true;
+      ui.footer.hidden = true;
+      ui.statusLabel.textContent = STAGE_LABELS.reformatting;
+      ui.status.hidden = false;
+      for (const btn of ui.formatButtons) btn.disabled = true; // pas de double requête
+      this.scheduleReposition();
+    }
+
+    /** v2 : message d'information sous la réponse (ex. incitation Premium). */
+    setNotice(message) {
+      if (!this.visible) return;
+      this.ui.notice.textContent = message;
+      this.ui.notice.hidden = !message;
       this.scheduleReposition();
     }
 
@@ -388,6 +547,10 @@
       const textNode = document.createTextNode('');
       answer.appendChild(textNode);
 
+      const bullets = el('ul', 'bullets');
+      bullets.hidden = true;
+      bullets.setAttribute('aria-live', 'polite');
+
       const error = el('div', 'error');
       error.setAttribute('role', 'alert');
       const errorMsg = el('p');
@@ -395,11 +558,34 @@
       action.type = 'button';
       error.append(errorMsg, action);
 
+      // v2 : sélecteur de format (rempli par setFormatOptions).
+      const formats = el('div', 'formats');
+      formats.setAttribute('role', 'group');
+      formats.setAttribute('aria-label', 'Format de la réponse');
+      const formatButtons = Object.keys(FORMAT_LABELS).map((format) => {
+        const btn = el('button', 'fmt');
+        btn.type = 'button';
+        btn.dataset.format = format;
+        btn.addEventListener('click', () => {
+          if (!btn.disabled && this.onFormatSelect) this.onFormatSelect(format);
+        });
+        formats.appendChild(btn);
+        return btn;
+      });
+
+      const notice = el('div', 'notice');
+      notice.setAttribute('role', 'status');
+
       const footer = el('div', 'footer');
 
-      card.append(header, status, answer, error, footer);
+      // [QA] Le sélecteur est placé EN HAUT : sa position ne dépend pas de la
+      // longueur de la réponse. Sinon, en changeant de format, la carte
+      // rétrécit, le bouton se déplace sous la souris immobile, le pointeur
+      // « sort » de la carte et l'infobulle se ferme (constaté en test E2E).
+      card.append(header, formats, status, answer, bullets, notice, error, footer);
       shadow.appendChild(card);
 
+      for (const type of ISOLATED_EVENTS) card.addEventListener(type, (e) => e.stopPropagation());
       card.addEventListener('pointerenter', () => this.cb.onPointerEnter());
       card.addEventListener('pointerleave', () => this.cb.onPointerLeave());
       close.addEventListener('click', () => this.cb.onClose());
@@ -409,19 +595,31 @@
       });
 
       this.host = host;
-      this.ui = { card, domain, status, statusLabel, answer, textNode, error, errorMsg, action, footer };
+      this.ui = {
+        card, domain, status, statusLabel, answer, textNode, error, errorMsg, action, footer,
+        formats, formatButtons, notice, bullets,
+      };
       document.documentElement.appendChild(host);
     }
 
     _resetContent() {
       this.pendingText = '';
       this.onAction = null;
+      this.onFormatSelect = null;
+      this.lock = null;
       const ui = this.ui;
+      ui.card.style.minHeight = '';
+      ui.card.style.maxHeight = '';
+      this._clearBullets();
+      ui.formats.hidden = true;
+      ui.notice.hidden = true;
+      ui.notice.textContent = '';
       // Aucun texte périmé ne reste dans le DOM une fois l'infobulle masquée.
       ui.textNode.data = '';
       ui.answer.hidden = true;
       ui.answer.classList.remove('streaming');
       ui.status.hidden = true;
+      ui.statusLabel.textContent = '';
       ui.error.hidden = true;
       ui.errorMsg.textContent = '';
       ui.action.textContent = '';
@@ -440,9 +638,17 @@
       this.pendingText = '';
       ui.status.hidden = true;
       ui.error.hidden = true;
+      this._clearBullets(); // pendant le flux : texte brut, la liste vient à la fin
       ui.answer.hidden = false;
       ui.answer.classList.add('streaming');
       this.scheduleReposition();
+    }
+
+    /** Vide et masque la liste à puces (v2). */
+    _clearBullets() {
+      if (!this.ui) return;
+      this.ui.bullets.replaceChildren();
+      this.ui.bullets.hidden = true;
     }
 
     _cancelFlush() {
@@ -465,6 +671,14 @@
       }
 
       const card = this.ui.card;
+
+      // Position verrouillée (changement de format en cours) : on ne bouge plus.
+      if (this.lock) {
+        card.style.maxHeight = `${Math.max(120, vh - this.lock.top - MARGIN)}px`;
+        card.style.transform = `translate(${Math.round(this.lock.left)}px, ${Math.round(this.lock.top)}px)`;
+        return;
+      }
+
       const w = card.offsetWidth;
       const h = card.offsetHeight;
 

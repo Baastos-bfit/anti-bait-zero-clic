@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Anti-Bait Zéro Clic",
   "short_name": "Anti-Bait",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Survolez un lien putaclic : l'IA vous révèle la réponse sans que vous ayez à cliquer.",
   "minimum_chrome_version": "120",
 

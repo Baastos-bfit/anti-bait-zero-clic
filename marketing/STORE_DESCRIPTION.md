@@ -21,7 +21,12 @@ Survolez un lien putaclic : l'IA vous révèle la réponse sans que vous ayez à
 Marre des titres qui cachent la réponse pour vous faire cliquer ?
 
 « Vous ne devinerez jamais qui… », « Ce chiffre va vous surprendre », « La raison est incroyable »…
-Anti-Bait Zéro Clic lit l'article à votre place et vous donne directement la réponse, en une ou deux phrases, dans une petite bulle au survol du lien.
+Anti-Bait Zéro Clic lit l'article à votre place et vous donne directement la réponse, en une phrase (ou en 3 puces avec la version Premium), dans une petite bulle au survol du lien.
+
+★ NOUVEAUTÉS DE LA VERSION 2.0.0
+• Statistiques de temps gagné (Premium) : découvrez combien de clics vous avez évités et le temps que vous avez récupéré. Un même article ne compte qu'une fois par jour, et ces données restent uniquement sur votre appareil.
+• Format puces IA (Premium) : la réponse et son contexte en 3 points clairs, comme format par défaut ou d'un clic directement dans la bulle.
+• Choix de la langue de réponse : langue du navigateur, toujours en français (traduction automatique des articles étrangers) ou langue d'origine de l'article.
 
 ★ COMMENT ÇA MARCHE
 Posez simplement votre souris une demi-seconde sur un lien d'article. Une bulle s'affiche avec la réponse que le titre cache : le nom, le chiffre, le fait. Pas de clic, pas de page chargée, pas de publicité.
@@ -37,6 +42,7 @@ Posez simplement votre souris une demi-seconde sur un lien d'article. Une bulle 
 • Votre clé API est chiffrée sur votre appareil
 • Aucun pistage, aucune publicité, aucune revente de données
 • Les réponses mémorisées sont effacées à la fermeture du navigateur
+• Statistiques calculées uniquement sur votre appareil, sans conserver l'adresse des articles
 
 ★ PENSÉE POUR NE PAS VOUS GÊNER
 • Rien ne s'affiche quand vous faites défiler votre fil : seulement quand vous vous arrêtez sur un lien
@@ -49,7 +55,7 @@ Anti-Bait utilise le service d'IA de votre choix, Anthropic (Claude) ou OpenAI, 
 
 ★ GRATUIT OU PREMIUM
 • Gratuit : 10 analyses par jour (les réponses déjà obtenues ne comptent pas)
-• Premium : analyses illimitées, 3,99 € en paiement unique (pas d'abonnement)
+• Premium : analyses illimitées, format puces et statistiques de temps gagné, 3,99 € en paiement unique (pas d'abonnement)
 
 Pour commencer : installez l'extension, collez votre clé API dans la page de réglages qui s'ouvre automatiquement, autorisez la lecture des articles… et survolez !
 
@@ -68,7 +74,11 @@ Français
 
 ### Éléments graphiques à fournir
 - **Icône 128×128** : `icons/icon-128.png` (déjà incluse dans le paquet)
-- **Captures d'écran** (au moins 1, 1280×800 ou 640×400) : l'infobulle avec une réponse sur un article, la page de réglages, l'infobulle sur un post LinkedIn
+- **Captures d'écran** (1280×800, PNG 24 bits sans transparence), prêtes dans `marketing/screenshots/`, à déposer dans cet ordre :
+  1. `01-infobulle-puces-premium.png` : l'infobulle en mode puces sur un fil d'actualité
+  2. `02-statistiques-temps-gagne.png` : la carte « Vos statistiques » et le format par défaut
+  3. `03-langue-des-reponses.png` : le choix de la langue de réponse
+  Pour les régénérer : `node tools/store-screenshots.mjs "<chemin d'Edge>" "<dossier temporaire>"`
 - **Petite vignette promotionnelle** (440×280), facultative mais recommandée
 
 ---
@@ -84,7 +94,7 @@ Afficher, au survol d'un lien d'article, une réponse courte générée par IA q
 
 **storage**
 ```
-Enregistrer localement les réglages de l'utilisateur, sa clé API chiffrée, la liste des sites d'actualité activés, le compteur d'analyses gratuites et un cache temporaire des réponses (effacé à la fermeture du navigateur).
+Enregistrer localement les réglages de l'utilisateur, sa clé API chiffrée, la liste des sites d'actualité activés, le compteur d'analyses gratuites, un cache temporaire des réponses (effacé à la fermeture du navigateur) et le compteur de clics évités (statistiques locales : un nombre et des empreintes anonymes du jour, sans aucune adresse de site).
 ```
 
 **scripting**
