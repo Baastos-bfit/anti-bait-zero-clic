@@ -20,4 +20,10 @@
 - [x] Intégrer le SDK ExtensionPay (Logique de blocage Premium).
 - [x] Audit SecOps final avant déploiement.
 
+## [ ] Phase 4 : Version 2.0.0
+
+- [ ] Intégrer une option dans la page de configuration pour traduire automatiquement en français les résumés d'articles étrangers.
+- [ ] Ajouter un sélecteur de format dans l'infobulle (Mode "Une phrase" vs Mode "Bullet Points").
+- [ ] Mettre en place un compteur local (`chrome.storage.local`) du nombre total de clics évités et du temps estimé gagné (ex : 2 minutes par clic évité) pour l'afficher sur la page des options.
+
 > Détail des revues QA × SecOps par tâche : [docs/REVIEWS.md](docs/REVIEWS.md) · Audit final : [docs/SECURITY.md](docs/SECURITY.md)
