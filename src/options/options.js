@@ -26,7 +26,11 @@ let state = null;
 async function send(type, payload = {}) {
   const res = await chrome.runtime.sendMessage({ type, ...payload });
   if (!res) throw new Error('Le service de l’extension ne répond pas. Rechargez la page.');
-  if (!res.ok) throw new Error((res.error && res.error.message) || 'Erreur inattendue.');
+  if (!res.ok) {
+    const err = new Error((res.error && res.error.message) || 'Erreur inattendue.');
+    err.code = res.error && res.error.code; // ex. PREMIUM_REQUIRED (v2)
+    throw err;
+  }
   return res.data;
 }
 
@@ -161,11 +165,88 @@ function renderPremium() {
   $('login').hidden = p.premium;
 }
 
+// ── v2 : réponses de l'IA (langue, format par défaut) ─────────────────────
+
+const LANGUAGE_FEEDBACK = {
+  browser: 'Les réponses suivront la langue de votre navigateur.',
+  fr: 'Les réponses seront toujours en français, y compris pour les articles étrangers.',
+  article: 'Les réponses garderont la langue d’origine de l’article.',
+};
+const PREMIUM_FORMAT_NOTICE = '🔒 Le format Puces est réservé à la version Premium (3,99 €, paiement unique).';
+
+/**
+ * [SecOps] Affichage uniquement : le statut Premium vient du service worker,
+ * qui refuse de toute façon d'enregistrer « Puces » pour un compte gratuit.
+ */
+function renderAnswers() {
+  const premium = state.premium.premium;
+  const { language, format } = state.settings;
+  for (const radio of document.querySelectorAll('input[name="language"]')) radio.checked = radio.value === language;
+  // Un compte gratuit voit toujours le format réellement appliqué : « Une phrase ».
+  const effective = premium ? format : 'sentence';
+  for (const radio of document.querySelectorAll('input[name="format"]')) radio.checked = radio.value === effective;
+  $('bullets-badge').hidden = premium;
+  $('format-bullets-choice').classList.toggle('locked', !premium);
+  $('format-bullets-choice').title = premium ? '' : 'Réservé à la version Premium';
+  if (premium) $('answers-upgrade').hidden = true;
+}
+
+function showFormatLocked() {
+  renderAnswers(); // la sélection revient sur « Une phrase »
+  feedback('answers-feedback', PREMIUM_FORMAT_NOTICE, 'premium');
+  $('answers-upgrade').hidden = false;
+}
+
+// ── v2 : statistiques ─────────────────────────────────────────────────────
+
+/** Carte « Vos statistiques » : chiffres (Premium) ou état verrouillé (gratuit). */
+function renderStats() {
+  const s = state.stats || { locked: true };
+  const locked = s.locked !== false;
+  $('stats-locked').hidden = !locked;
+  $('stats-unlocked').hidden = locked;
+  if (locked) return;
+  $('stats-time').textContent = s.timeSavedLabel;
+  $('stats-clicks').textContent = new Intl.NumberFormat('fr-FR').format(s.clicksAvoided);
+  $('stats-clicks-label').textContent = s.clicksAvoided > 1 ? 'clics évités' : 'clic évité';
+  $('stats-since').textContent =
+    `Depuis le ${s.sinceLabel} · estimation : ${s.minutesPerClick} min gagnées par clic évité ` +
+    '(un même article compte une seule fois par jour).';
+  $('stats-reset').disabled = s.clicksAvoided === 0;
+}
+
+async function refreshStats() {
+  try {
+    state.stats = await send('getStats');
+    renderStats();
+  } catch {
+    /* le prochain refresh() réessaiera */
+  }
+}
+
+/**
+ * Boîte de confirmation (élément <dialog> natif : Échap = annuler, focus piégé,
+ * thème clair/sombre). Résout vrai uniquement sur « confirmer ».
+ */
+function confirmDialog({ title, description, confirmLabel }) {
+  const dialog = $('reset-dialog');
+  $('reset-title').textContent = title;
+  $('reset-desc').textContent = description;
+  $('reset-confirm').textContent = confirmLabel;
+  dialog.returnValue = '';
+  dialog.showModal();
+  return new Promise((resolve) => {
+    dialog.addEventListener('close', () => resolve(dialog.returnValue === 'confirm'), { once: true });
+  });
+}
+
 function render() {
   renderProviders();
   renderAccess();
   renderMedia();
+  renderAnswers();
   renderBehavior();
+  renderStats();
   renderPremium();
 }
 
@@ -376,11 +457,111 @@ $('refresh-premium').addEventListener('click', () =>
   })
 );
 
+// ── Actions v2 : réponses de l'IA ─────────────────────────────────────────
+
+for (const radio of document.querySelectorAll('input[name="language"]')) {
+  radio.addEventListener('change', async () => {
+    if (!radio.checked) return;
+    try {
+      state.settings = await send('saveSettings', { settings: { language: radio.value } });
+      feedback('answers-feedback', LANGUAGE_FEEDBACK[state.settings.language]);
+      $('answers-upgrade').hidden = true;
+    } catch (err) {
+      feedback('answers-feedback', err.message, 'error');
+      renderAnswers();
+    }
+  });
+}
+
+for (const radio of document.querySelectorAll('input[name="format"]')) {
+  radio.addEventListener('change', async () => {
+    if (!radio.checked) return;
+    if (radio.value === 'bullets' && !state.premium.premium) {
+      showFormatLocked();
+      return;
+    }
+    try {
+      state.settings = await send('saveSettings', { settings: { format: radio.value } });
+      feedback(
+        'answers-feedback',
+        state.settings.format === 'bullets' ? 'Format par défaut : puces (3 points maximum).' : 'Format par défaut : une phrase.'
+      );
+    } catch (err) {
+      // Le worker a le dernier mot (ex. Premium expiré ou remboursé).
+      if (err.code === 'PREMIUM_REQUIRED') showFormatLocked();
+      else {
+        feedback('answers-feedback', err.message, 'error');
+        renderAnswers();
+      }
+    }
+  });
+}
+
+$('answers-upgrade').addEventListener('click', () =>
+  busy($('answers-upgrade'), async () => {
+    try {
+      await send('openPayment');
+    } catch (err) {
+      feedback('answers-feedback', err.message, 'error');
+    }
+  })
+);
+
+// ── Actions v2 : statistiques ─────────────────────────────────────────────
+
+$('stats-reset').addEventListener('click', async () => {
+  const confirmed = await confirmDialog({
+    title: 'Remettre vos statistiques à zéro ?',
+    description: 'Le compteur de clics évités et le temps gagné repartiront de zéro. Cette action est définitive.',
+    confirmLabel: 'Remettre à zéro',
+  });
+  if (!confirmed) return;
+  await busy($('stats-reset'), async () => {
+    try {
+      state.stats = await send('resetStats');
+      renderStats();
+      feedback('stats-feedback', 'Statistiques remises à zéro.');
+    } catch (err) {
+      feedback('stats-feedback', err.message, 'error');
+    }
+  });
+  renderStats(); // busy() réactive le bouton : on réapplique l'état (désactivé à 0)
+});
+
+$('stats-erase').addEventListener('click', async () => {
+  const confirmed = await confirmDialog({
+    title: 'Effacer les données de statistiques ?',
+    description: 'Le compteur tenu sur votre appareil sera supprimé. Cette action est définitive.',
+    confirmLabel: 'Effacer',
+  });
+  if (!confirmed) return;
+  try {
+    state.stats = await send('resetStats');
+    renderStats();
+    feedback('stats-feedback', 'Données de statistiques effacées.');
+  } catch (err) {
+    feedback('stats-feedback', err.message, 'error');
+  }
+});
+
+$('stats-upgrade').addEventListener('click', () =>
+  busy($('stats-upgrade'), async () => {
+    try {
+      await send('openPayment');
+    } catch (err) {
+      feedback('stats-feedback', err.message, 'error');
+    }
+  })
+);
+
 // ── Synchronisation automatique ───────────────────────────────────────────
 
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === 'local' && (changes.settings || changes.mediaDomains || changes.quota || changes.premiumLastKnown)) {
+  if (area !== 'local') return;
+  if (changes.settings || changes.mediaDomains || changes.quota || changes.premiumLastKnown) {
     refresh();
+  } else if (changes.stats) {
+    refreshStats(); // un lien vient d'être analysé dans un autre onglet
   }
 });
 chrome.permissions.onAdded.addListener(refresh);

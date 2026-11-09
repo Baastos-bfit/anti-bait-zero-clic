@@ -83,9 +83,62 @@
       <p class="feedback" id="media-feedback" role="status" aria-live="polite"></p>
     </section>
 
-    <!-- 4. Comportement -->
+    <!-- 4. Réponses de l'IA (v2) -->
+    <section id="answers" class="panel" aria-labelledby="answers-title">
+      <h2 id="answers-title"><span class="step">4</span> Réponses de l’IA</h2>
+
+      <fieldset class="choice-group">
+        <legend>Langue des réponses</legend>
+        <label class="choice">
+          <input type="radio" name="language" value="browser">
+          <span class="choice-body">
+            <span class="choice-title">Langue du navigateur</span>
+            <span class="choice-desc">La réponse suit la langue de Chrome (comportement par défaut).</span>
+          </span>
+        </label>
+        <label class="choice">
+          <input type="radio" name="language" value="fr">
+          <span class="choice-body">
+            <span class="choice-title">Toujours en français</span>
+            <span class="choice-desc">Les articles en langue étrangère sont résumés et traduits en français.</span>
+          </span>
+        </label>
+        <label class="choice">
+          <input type="radio" name="language" value="article">
+          <span class="choice-body">
+            <span class="choice-title">Langue de l’article</span>
+            <span class="choice-desc">La réponse garde la langue d’origine de l’article.</span>
+          </span>
+        </label>
+      </fieldset>
+
+      <fieldset class="choice-group">
+        <legend>Format par défaut</legend>
+        <label class="choice">
+          <input type="radio" name="format" value="sentence">
+          <span class="choice-body">
+            <span class="choice-title">Une phrase</span>
+            <span class="choice-desc">La réponse directe, en une phrase courte.</span>
+          </span>
+        </label>
+        <label class="choice" id="format-bullets-choice">
+          <input type="radio" name="format" value="bullets">
+          <span class="choice-body">
+            <span class="choice-title">Puces <span class="badge-premium" id="bullets-badge">🔒 Premium</span></span>
+            <span class="choice-desc">La réponse et son contexte, en 3 points maximum.</span>
+          </span>
+        </label>
+      </fieldset>
+      <p class="hint small">Vous pouvez aussi changer de format pour un lien précis, directement dans l’infobulle.</p>
+      <div class="feedback-row">
+        <p class="feedback" id="answers-feedback" role="status" aria-live="polite"></p>
+        <button id="answers-upgrade" type="button" class="primary small" hidden>Passer Premium</button>
+      </div>
+    </section>
+
+    <!-- 5. Comportement -->
     <section id="behavior" class="panel" aria-labelledby="behavior-title">
-      <h2 id="behavior-title"><span class="step">4</span> Comportement</h2>
+      <h2 id="behavior-title"><span class="step">5</span> Comportement</h2>
       <label class="switch">
         <input id="enabled" type="checkbox">
         <span>Activer Anti-Bait</span>
@@ -98,7 +151,60 @@
       <p class="feedback" id="behavior-feedback" role="status" aria-live="polite"></p>
     </section>
 
-    <!-- 5. Premium -->
+    <!-- Vos statistiques (v2, Premium) -->
+    <section id="stats" class="panel" aria-labelledby="stats-title">
+      <h2 id="stats-title"><span class="step">⏱</span> Vos statistiques</h2>
+
+      <!-- Version Premium : chiffres réels (fournis par le service worker). -->
+      <div id="stats-unlocked" class="stats-card" hidden>
+        <div class="stats-figures">
+          <div class="stat">
+            <span class="stat-value" id="stats-time">0 min</span>
+            <span class="stat-label">de temps gagné</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="stats-clicks">0</span>
+            <span class="stat-label" id="stats-clicks-label">clic évité</span>
+          </div>
+        </div>
+        <p class="hint small" id="stats-since"></p>
+        <div class="row">
+          <button id="stats-reset" type="button" class="danger">Remettre à zéro</button>
+        </div>
+      </div>
+
+      <!-- Version gratuite : état verrouillé incitatif (aperçu factice, aucun vrai chiffre). -->
+      <div id="stats-locked" class="stats-card locked" hidden>
+        <div class="teaser-wrap">
+          <div class="stats-figures teaser" aria-hidden="true">
+            <div class="stat"><span class="stat-value">2 h 14 min</span><span class="stat-label">de temps gagné</span></div>
+            <div class="stat"><span class="stat-value">67</span><span class="stat-label">clics évités</span></div>
+          </div>
+          <div class="lock-overlay">
+            <span class="lock-icon" aria-hidden="true">🔒</span>
+            <p class="lock-text">Débloquez vos statistiques détaillées et découvrez le temps que vous avez gagné grâce à la version Premium.</p>
+            <button id="stats-upgrade" type="button" class="primary">Passer Premium — 3,99 €</button>
+          </div>
+        </div>
+        <p class="hint small">Vos clics évités sont déjà comptés en toute discrétion, sur votre appareil uniquement : ils s’afficheront dès votre passage en Premium.
+          <button id="stats-erase" type="button" class="link-button">Effacer ces données</button></p>
+      </div>
+      <p class="feedback" id="stats-feedback" role="status" aria-live="polite"></p>
+    </section>
+
+    <!-- Confirmation de remise à zéro (élément natif : clavier, focus, thème). -->
+    <dialog id="reset-dialog" aria-labelledby="reset-title" aria-describedby="reset-desc">
+      <form method="dialog">
+        <h3 id="reset-title">Remettre vos statistiques à zéro ?</h3>
+        <p id="reset-desc">Le compteur de clics évités et le temps gagné repartiront de zéro. Cette action est définitive.</p>
+        <div class="dialog-actions">
+          <button value="cancel" type="submit" autofocus>Annuler</button>
+          <button value="confirm" type="submit" class="danger-solid" id="reset-confirm">Remettre à zéro</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Premium -->
     <section id="premium" class="panel" aria-labelledby="premium-title">
       <h2 id="premium-title"><span class="step">★</span> Premium</h2>
       <p id="premium-status" class="status-line"></p>
